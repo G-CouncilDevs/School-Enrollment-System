@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in · EiKuGa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="login.css">
+</head>
+<body class="login-page">
+  <main class="login">
+
+    <section class="intro">
+      <div class="brand">
+        <span class="brand-name">Random Learning Facility</span>
+      </div>
+      <h1>Student Enrollment<br>System</h1>
+      <p>Manage courses, enroll students, and keep track of every enrollment.</p>
+    </section>
+
+    <section class="card" aria-labelledby="login-title">
+      <header class="card-header">
+        <h2 id="login-title">Welcome back</h2>
+        <p>Sign in to your faculty account to continue.</p>
+      </header>
+
+      <form id="login-form" novalidate>
+        <p class="form-message" id="form-message" role="alert" hidden></p>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="you@school.edu" autocomplete="email" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn">Sign in</button>
+      </form>
+
+      <p class="card-footer">Need access? Contact your administrator.</p>
+    </section>
+
+  </main>
+</body>
+</html>

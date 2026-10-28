@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student & Course Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-links">
+            <button class="nav-item active">Dashboard</button>
+            <button class="nav-item">Courses</button>
+            <button class="nav-item">Students</button>
+            <button class="nav-item">Enrollments</button>
+        </div>
+        <div class="user-profile">
+            <span class="avatar">AD</span>
+            <div class="user-info">
+                <strong>Admin</strong>
+                <span>Registrar Office</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        
+        <!-- Header Section -->
+        <header class="page-header">
+            <h1>Student & Course Management</h1>
+            <div class="header-actions">
+                <button id="openEnrollModalBtn" class="btn-secondary">Enroll Student</button>
+                <button id="openAddCourseBtn" class="btn-primary">+ Add Course</button>
+            </div>
+        </header>
+
+        <!-- KPI / Dashboard Counts (Extra Feature) -->
+        <section class="kpi-cards">
+            <div class="card dark-card">
+                <h3>Total Enrolled Students</h3>
+                <p id="totalEnrolledCount">1,248</p>
+            </div>
+            <div class="card">
+                <h3>Active Courses</h3>
+                <p id="activeCoursesCount">36</p>
+            </div>
+            <div class="card">
+                <h3>Registered Students</h3>
+                <p id="registeredStudentsCount">1,502</p>
+            </div>
+        </section>
+
+        <div class="main-content-grid">
+            
+            <!-- Left Column: Courses Table -->
+            <section class="courses-section card">
+                <div class="section-header">
+                    <div>
+                        <h2>Courses</h2>
+                        <p>36 courses this term</p>
+                    </div>
+                    <div class="filters">
+                        <input type="text" id="courseSearch" placeholder="Search courses...">
+                        <!-- Maps to 'Programs' collection -->
+                        <select id="programFilter">
+                            <option value="all">All Programs</option>
+                            <!-- Program options injected by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>COURSE</th>
+                            <th>PROGRAM</th> <!-- Mapped to Program -->
+                            <th>INSTRUCTOR</th> <!-- Mapped to Employee -->
+                            <th>ENROLLED</th> <!-- Mapped to Block available_slots -->
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="courseTableBody">
+                        <!-- Example row based on mockup -->
+                        <tr>
+                            <td><strong>Introduction to Programming</strong></td>
+                            <td>BS Computer Science</td>
+                            <td>Dr. Maria Santos</td>
+                            <td>42 / 50</td>
+                            <td>
+                                <button class="action-btn edit">Edit</button>
+                                <button class="action-btn delete">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="pagination">
+                    <span>Showing 6 of 36 courses</span>
+                    <div>
+                        <button>Previous</button>
+                        <button>Next</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Quick Enrollment Form -->
+            <aside class="enrollment-section card">
+                <h2>Enroll a Student</h2>
+                <p>Register a student in an open course.</p>
+
+                <!-- Success/Error Message Area -->
+                <div id="enrollmentMessage" class="alert success" style="display: none;">
+                    <!-- e.g., Maria Lopez was enrolled in CS101. -->
+                </div>
+
+                <form id="quickEnrollForm">
+                    <div class="form-group">
+                        <label for="enrollStudent">Student</label>
+                        <select id="enrollStudent" required>
+                            <option value="">Select a student</option>
+                            <!-- Injected by JS (Students collection) -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="enrollProgram">Program</label>
+                        <select id="enrollProgram" required>
+                            <option value="">Select a program</option>
+                            <!-- Injected by JS (Programs collection) -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="enrollCourse">Course</label>
+                        <select id="enrollCourse" required>
+                            <option value="">Select a course</option>
+                            <!-- Injected by JS (Courses collection) -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="enrollBlock">Block / Schedule</label>
+                        <select id="enrollBlock" required>
+                            <option value="">Select a block</option>
+                            <!-- Injected by JS (Block collection) -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="enrollApprover">Approved By (Employee)</label>
+                        <select id="enrollApprover" required>
+                            <option value="">Select employee</option>
+                            <!-- Injected by JS (Employees collection) -->
+                        </select>
+                    </div>
+
+                    <!-- Year Level (From Enrollment schema) -->
+                    <div class="form-group">
+                        <label for="enrollYearLevel">Year Level</label>
+                        <input type="number" id="enrollYearLevel" min="1" max="5" required placeholder="e.g., 1">
+                    </div>
+
+                    <button type="submit" class="btn-primary full-width">Enroll Student</button>
+                </form>
+            </aside>
+
+        </div>
+
+        <!-- Bottom Section: Search Students List -->
+        <section class="student-search-section card mt-4">
+            <div class="section-header">
+                <h2>Search Students</h2>
+                <div class="filters">
+                    <input type="text" id="studentSearchInput" placeholder="Search by name...">
+                    <select id="studentCourseFilter">
+                        <option value="all">All Courses</option>
+                        <!-- Course options injected here -->
+                    </select>
+                </div>
+            </div>
+
+            <ul class="student-list" id="studentListContainer">
+                <!-- Example list item based on mockup -->
+                <li class="student-item">
+                    <div class="student-avatar">ML</div>
+                    <div class="student-details">
+                        <strong>Maria Lopez</strong>
+                        <span>2024-0142 • BS Computer Science</span>
+                    </div>
+                    <div class="student-status enrolled">Enrolled</div>
+                </li>
+            </ul>
+
+            <div class="list-footer">
+                <span id="filteredStudentCount">42 students enrolled</span>
+                <a href="#" id="viewFullRoster">View full roster</a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Link to your script.js here -->
+</body>
+</html>
