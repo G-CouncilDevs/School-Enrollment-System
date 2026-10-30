@@ -5,7 +5,7 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 const {MONGODB_USERNAME, MONGODB_PASSWORD} = process.env
 export async function connectToMongoDB() {
   const URI = 
-    `mongodb+srv://${encodeURIComponent(MONGODB_USERNAME)}:${encodeURIComponent(MONGODB_PASSWORD)}`+`@cluster0.6nhdxmw.mongodb.net/mydb?retryWrites=true&w=majority`;
+    `mongodb+srv://${encodeURIComponent(MONGODB_USERNAME)}:${encodeURIComponent(MONGODB_PASSWORD)}`+`@cluster0.6nhdxmw.mongodb.net/`
 
   try {
     await mongoose.connect(URI);
