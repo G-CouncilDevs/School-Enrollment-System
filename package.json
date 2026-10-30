@@ -1,0 +1,27 @@
+{
+  "name": "school-enrollment-system",
+  "version": "1.0.0",
+  "description": "A web-based management system built to handle course creation, student registration, course enrollments, and student lookups.",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/G-CouncilDevs/School-Enrollment-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/G-CouncilDevs/School-Enrollment-System/issues"
+  },
+  "homepage": "https://github.com/G-CouncilDevs/School-Enrollment-System#readme",
+  "dependencies": {
+    "express": "^5.3.0",
+    "mongodb": "^7.7.0",
+    "mongoose": "^9.11.4"
+  }
+}
