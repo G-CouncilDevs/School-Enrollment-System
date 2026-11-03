@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 import dns from 'node:dns';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
@@ -19,4 +20,3 @@ export async function connectToMongoDB() {
 export async function disconnectFromMongoDB() {
   await mongoose.connection.close();
 }
-
