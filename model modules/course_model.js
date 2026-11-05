@@ -16,7 +16,7 @@ export async function createCourse(req, res) {
             prerequisites:  req.body.prerequisites
         })
         const saved = await newCourse.save()
-        res.status(201).jsaon(saved)
+        res.status(201).json(saved)
     }
     catch (err){
         res.status(400).json({error:err.message})
