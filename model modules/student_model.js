@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import { nextStudentID } from "./studentID_generator";
+import { nextStudentID } from "./studentID_generator.js";
 
 const studentSchema = new mongoose.Schema({
-    _id:        {type: String, required: true},
+    _id:        {type: Number, required: true},
     first_name: {type: String, required: true},
     middle_name:{type: String, required: true},
     last_name:  {type: String, required: true},
@@ -36,3 +36,5 @@ export async function createStudent(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+export default Student

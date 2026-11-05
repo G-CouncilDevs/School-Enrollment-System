@@ -10,7 +10,7 @@ const counter = mongoose.model("Counter", counterSchema)
 export async function nextStudentID() {
     const year = new Date().getFullYear()
 
-    const counter = await Counter.findByIdAndUpdate(
+    const counter = await counter.findByIdAndUpdate(
         `student-${year}`,
         {$inc: {seq: 1}},
         {new: true, upsert: true}
@@ -18,4 +18,4 @@ export async function nextStudentID() {
     return  `${year}${String(counter.seq).padStart(6,"0")}`
 }
 
-export default Counter
+export default counter

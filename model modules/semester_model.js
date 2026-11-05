@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 
 const semesterSchema = new mongoose.Schema({
-    term:           {type: String, required: True},
-    academic_year:  {type: Number, required: True},
+    term:           {type: String, required: true},
+    academic_year:  {type: Number, required: true},
     offerings:      [{
         _id: false,
-        course:         {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: True},
+        course:         {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: true},
         course_active:  {type: Boolean,  required: True}
     }]  
 })
@@ -26,3 +26,5 @@ export async function createSemester(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+export default Semester

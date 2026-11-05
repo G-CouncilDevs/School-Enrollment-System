@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 const enrollmentSchema= new mongoose.Schema({
-    student:        {type: mongoose.Schema.Types.ObjectId, ref: "Student", required: True},
-    approved_by:    {type: mongoose.Schema.Types.ObjectId, ref: "Empolyee", required: True},
+    student:        {type: mongoose.Schema.Types.Number, ref: "Student", required: true},
+    approved_by:    {type: mongoose.Schema.Types.ObjectId, ref: "Empolyee", required: true},
     program:        { type: mongoose.Schema.Types.ObjectId, ref: "Program" },
     semester:       { type: mongoose.Schema.Types.ObjectId, ref: "Semester" },
     block:          { type: mongoose.Schema.Types.ObjectId, ref: "Block" },
@@ -27,3 +27,5 @@ export async function createEnrollment(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+export default Enrollment

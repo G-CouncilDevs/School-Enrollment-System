@@ -2,12 +2,12 @@ import { request } from "express";
 import mongoose from "mongoose";
 
 const programSchema = new mongoose.Schema({
-    name:   {type: String, required: True},
-    major:  {type: String, required: True},
+    name:   {type: String, required: true},
+    major:  {type: String, required: true},
     courses: [{
         _id: false,
-        courses:    {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: True},
-        year_level: {type: number, required: true}
+        courses:    {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: true},
+        year_level: {type: Number, required: true}
     }]
 })
 
@@ -27,3 +27,5 @@ export async function createProgram(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+export default Program

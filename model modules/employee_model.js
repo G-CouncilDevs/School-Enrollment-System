@@ -22,3 +22,5 @@ export async function createEmployee(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+export default Employee

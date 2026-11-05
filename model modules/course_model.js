@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
     name:           {type: String, required: true},
-    units:          {type: number, required: true},
+    units:          {type: Number, required: true},
     prerequisites:  {type: String, required: true}
 })
 
-const Course = mongoose.model("Course", courseSchema)
+const Courses = mongoose.model("Courses", courseSchema)
 
 export async function createCourse(req, res) {
     try{
@@ -22,3 +22,5 @@ export async function createCourse(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+export default Courses

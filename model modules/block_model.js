@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 
 const blockSchema = new mongoose.Schema({
-    semester:       {type: mongoose.Schema.Types.ObjectId, ref: "Semester", required: True},
+    semester:       {type: mongoose.Schema.Types.ObjectId, ref: "Semester", required: true},
     section_name:   {type: String, required: True},
     courses:    [{
         _id:false,
-        courses:    {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: True},
+        courses_name:    {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: true},
         employee:   {type: mongoose.Schema.Types.ObjectId, ref: "Employee"},
         schedule:   {type: String},
         room:       {type: String}
@@ -33,3 +33,5 @@ export async function createBlock(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+export default Block
