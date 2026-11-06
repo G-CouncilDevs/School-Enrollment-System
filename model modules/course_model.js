@@ -1,12 +1,12 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 const courseSchema = new mongoose.Schema({
     name:           {type: String, required: true},
     units:          {type: Number, required: true},
-    prerequisites:  {type: String, required: true}
+    prerequisites:  [{type: mongoose.Schema.Types.ObjectId, ref: "Course"}]
 })
 
-const Courses = mongoose.model("Courses", courseSchema)
+const Course = mongoose.model("Course", courseSchema)
 
 export async function createCourse(req, res) {
     try{
@@ -23,4 +23,4 @@ export async function createCourse(req, res) {
     }
 }
 
-export default Courses
+export default Course

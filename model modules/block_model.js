@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const blockSchema = new mongoose.Schema({
     semester:       {type: mongoose.Schema.Types.ObjectId, ref: "Semester", required: true},
-    section_name:   {type: String, required: True},
+    section_name:   {type: String, required: true},
     courses:    [{
         _id:false,
-        courses_name:    {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: true},
+        course:    {type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true},
         employee:   {type: mongoose.Schema.Types.ObjectId, ref: "Employee"},
         schedule:   {type: String},
         room:       {type: String}
@@ -30,6 +30,9 @@ export async function createBlock(req, res) {
         res.status(201).json(saved)
     }
     catch(err){
+        if (err.code === 11000) {
+            return res.status(409).json({error: "That section already exists for this semester"})
+    }
         res.status(400).json({error:err.message})
     }
 }

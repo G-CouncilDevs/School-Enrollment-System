@@ -4,7 +4,7 @@ import { nextStudentID } from "./studentID_generator.js";
 const studentSchema = new mongoose.Schema({
     _id:        {type: Number, required: true},
     first_name: {type: String, required: true},
-    middle_name:{type: String, required: true},
+    middle_name:{type: String},
     last_name:  {type: String, required: true},
     sex:        {type: String, enum: ["Male", "Female"]},
     birth_date: Date,

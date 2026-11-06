@@ -1,12 +1,11 @@
-import { request } from "express";
 import mongoose from "mongoose";
 
 const programSchema = new mongoose.Schema({
     name:   {type: String, required: true},
-    major:  {type: String, required: true},
+    major:  {type: String},
     courses: [{
         _id: false,
-        courses:    {type: mongoose.Schema.Types.ObjectId, ref: "Courses", required: true},
+        course:    {type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true},
         year_level: {type: Number, required: true}
     }]
 })
@@ -20,7 +19,7 @@ export async function createProgram(req, res) {
             major:  req.body.major,
             courses: req.body.courses
         })
-        const saved = await newCourse.save()
+        const saved = await newProgram.save()
         res.status(201).json(saved)
     }
     catch(err){
