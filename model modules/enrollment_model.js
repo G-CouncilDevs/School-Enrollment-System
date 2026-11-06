@@ -27,6 +27,9 @@ export async function createEnrollment(req, res) {
         res.status(201).json(saved)
     }
     catch(err){
+        if (err.code === 11000) {
+            return res.status(409).json({error: "This student is already enrolled for this semester"})
+    }
         res.status(400).json({error:err.message})
     }
 }
