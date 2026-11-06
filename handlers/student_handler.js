@@ -1,4 +1,4 @@
-import Student from "../models/student.js";
+import Student from "../models/student_model.js";
 import { nextStudentID } from "../models/studentID_generator.js";
 
 export async function createStudent(req, res) {
