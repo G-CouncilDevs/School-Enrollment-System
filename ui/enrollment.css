@@ -1,0 +1,221 @@
+/* Root colours */
+:root {
+  --navy: #202a44;
+  --line: #e2e8f0;
+  --gray: #64748b;
+  --red: #dc2626;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #0f172a;
+  background: #e4e6e9;
+}
+
+button, input, select { font: inherit; }
+
+/* ---------- Navbar ---------- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 68px;
+  padding: 0 max(24px, calc(50% - 526px));   /* lines up with the page content */
+  background: var(--navy);
+}
+
+.navbar nav a {
+  margin-right: 8px;
+  padding: 8px 14px;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.navbar nav a.active { color: var(--navy); background: #fff; font-weight: 600; }
+
+.user-menu { position: relative; }
+
+.user-menu summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  list-style: none;
+  cursor: pointer;
+}
+
+.user-menu summary::-webkit-details-marker { display: none; }
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  background: #fff;
+  border-radius: 50%;
+}
+
+.user-menu-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 5;
+  min-width: 160px;
+  margin-top: 8px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.user-menu-list a { display: block; padding: 10px 12px; color: #0f172a; text-decoration: none; }
+
+/* ---------- Page and panels ---------- */
+main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+h1 { margin: 0 0 24px; font-size: 32px; }
+
+.panel {
+  margin-bottom: 24px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.panel h2 { margin: 0; font-size: 20px; }
+.panel h3 { margin: 28px 0 12px; font-size: 16px; }
+.sub { margin: 4px 0 0; color: var(--gray); }
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Form fields and buttons ---------- */
+label { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: 14px; font-weight: 500; }
+label input, label select { width: 100%; min-width: 0; }
+
+input, select {
+  padding: 11px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+input:disabled, select:disabled { color: #94a3b8; background: #f1f5f9; cursor: not-allowed; }
+input[type="checkbox"] { width: 16px; height: 16px; padding: 0; }
+
+.btn {
+  display: inline-block;
+  padding: 11px 18px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  color: #fff;
+  background: var(--navy);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn.light { color: #0f172a; background: #fff; border: 1px solid #cbd5e1; }
+
+.link { font-weight: 600; text-decoration: none; color: #1d4ed8; }
+
+/* ---------- Table (New Enrollees) ---------- */
+.table-wrap { overflow-x: auto; margin: 16px 0 14px; }
+table { width: 100%; min-width: 700px; border-collapse: collapse; }
+
+th {
+  padding: 10px 8px;
+  font-size: 12px;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--gray);
+  background: #f8fafc;
+}
+
+td { padding: 14px 8px; border-top: 1px solid var(--line); }
+
+/* ---------- Mode tabs: New enrollee / Existing student ---------- */
+/* Radio buttons are hidden. The tab labels click them. */
+.mode { display: none; }
+
+.tabs { display: flex; gap: 10px; }
+
+.tabs label {
+  padding: 11px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* show only the part for the chosen mode, and color the chosen tab */
+#mode-new:checked ~ form .only-existing,
+#mode-existing:checked ~ form .only-new { display: none; }
+
+#mode-new:checked ~ .panel-head label[for="mode-new"],
+#mode-existing:checked ~ .panel-head label[for="mode-existing"] { color: #fff; background: var(--navy); border-color: var(--navy); }
+
+/* ---------- Student details ---------- */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.find { max-width: 520px; }
+
+/* ---------- Courses ---------- */
+.courses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+
+.courses label {
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 400;
+}
+
+.courses small { display: block; margin-top: 3px; }
+.courses .off { color: #94a3b8; background: #f1f5f9; border-style: dashed; }      /* can't take it */
+.courses .off small { color: #b45309; }
+.courses .extra { background: #fffbeb; border-color: #f59e0b; }                    /* added for this student */
+.courses .extra small { color: #92400e; }
+
+.note { margin: 14px 0 0; padding: 12px 14px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; }
+
+.add-row { display: flex; align-items: flex-end; gap: 12px; margin-top: 16px; }
+.add-row label { flex: 1; }
+
+/* ---------- Bottom buttons ---------- */
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.form-footer span { color: var(--gray); }
+.form-footer div { display: flex; gap: 12px; }
+
+/* ---------- Small screens ---------- */
+@media (max-width: 900px) {
+  .navbar { padding: 0 16px; }
+  .navbar nav a { margin-right: 0; }
+  .grid, .courses { grid-template-columns: 1fr; }
+  .panel-head, .form-footer, .add-row { flex-direction: column; align-items: stretch; }
+  .form-footer { gap: 14px; }
+  .form-footer div { flex-direction: column-reverse; }
+}
