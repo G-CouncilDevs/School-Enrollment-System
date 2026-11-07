@@ -13,7 +13,7 @@ export async function nextStudentID() {
     const counter = await Counter.findByIdAndUpdate(
         `student-${year}`,
         {$inc: {seq: 1}},
-        {new: true, upsert: true}
+        {returnDocument: "after", upsert: true}
     )
     return  year * 1000000 + counter.seq
 }
