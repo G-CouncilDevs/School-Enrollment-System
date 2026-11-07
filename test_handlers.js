@@ -194,6 +194,11 @@ async function runTests() {
 
 // ---------- cleanup ----------
 async function cleanup() {
+    console.log("\n== Pausing 10 seconds so you can check the data in Atlas ==")
+    console.log("   (refresh your collections now, the test data will be deleted after the pause)")
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+
+    
     console.log("\n== Cleaning up test data ==")
     const ids = (list) => ({ _id: { $in: list } })
 
