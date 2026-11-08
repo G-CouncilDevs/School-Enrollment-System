@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Course from "../models/course_model.js";
 import Program from "../models/program_model.js";
 import Semester from "../models/semester_model.js";
@@ -126,12 +127,13 @@ export async function updateCourse(req, res) {
 //DELETE
 export async function deleteCourse(req, res) {
     try{
-        const code = normalizeCode(req.params.code)
-        if (!code) return res.status(400).json({error: "Course code required"})
+        const id = String(req.params.id ?? "")
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({error: "Invalid course id"})
+        }
 
-        const course = await Course.findOne({ code })
+        const course = await Course.findById(id)
         if (!course) return res.status(404).json({error: "Course not found"})
-        const id = course._id
 
         const used = await Promise.all([
             Course.exists({ prerequisites: id }),
@@ -155,7 +157,7 @@ export async function deleteCourse(req, res) {
         }
 
         await Course.findByIdAndDelete(id)
-        res.status(200).json({message: "Course deleted", code})
+        res.status(200).json({message: "Course deleted", id})
     }
     catch(err){
         res.status(500).json({error:err.message})
