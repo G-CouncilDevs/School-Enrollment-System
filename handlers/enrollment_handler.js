@@ -8,7 +8,7 @@ import Block from "../models/block_model.js";
 import Course from "../models/course_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
-import { claimSeat } from "../helpers/seat_helper.js";
+import { claimSeat } from "../helper/seat_helper.js";
  
 const isId = (value) => mongoose.isValidObjectId(String(value))
 

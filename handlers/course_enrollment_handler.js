@@ -5,7 +5,7 @@ import Semester from "../models/semester_model.js";
 import Block from "../models/block_model.js";
 import Course from "../models/course_model.js";
 import CourseRecord from "../models/course_record_model.js";
-import { claimSeat } from "../helpers/seat_helper.js";
+import { claimSeat } from "../helper/seat_helper.js";
 // Imported so populate() can find the model:
 import "../models/student_model.js";
  
