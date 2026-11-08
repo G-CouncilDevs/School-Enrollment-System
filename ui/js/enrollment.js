@@ -59,6 +59,7 @@ function renderBlocks() {
   document.querySelectorAll("[data-sections]").forEach((select) => {
     select.innerHTML = `<option value="">Select section</option>${options}`;
   });
+  renderBlockCourses();
 }
 
 // Store the block selected for the current enrollment.
@@ -67,6 +68,37 @@ function selectBlock(event) {
     enrollmentState.blocks.find(
       (block) => String(block._id) === String(event.target.value),
     ) || null;
+  renderBlockCourses();
+}
+
+// Show selected block courses and their prerequisite names.
+function renderBlockCourses() {
+  const courses = enrollmentState.selectedBlock?.courses || [];
+  const markup = courses.length
+    ? courses
+        .map(({ course }) => {
+          const prerequisites = course.prerequisites?.length
+            ? course.prerequisites
+                .map((prerequisite) => escapeHtml(prerequisite.name || prerequisite.code))
+                .join(", ")
+            : "None";
+
+          return `
+            <label>
+              <input type="checkbox" name="courses" value="${escapeHtml(course._id)}">
+              <span>
+                <strong>${escapeHtml(course.code)} · ${escapeHtml(course.name)}</strong>
+                <small>${escapeHtml(course.units)} units · Prerequisites: ${prerequisites}</small>
+              </span>
+            </label>
+          `;
+        })
+        .join("")
+    : '<p class="empty">Select a section to see its courses.</p>';
+
+  document.querySelectorAll(".courses").forEach((container) => {
+    container.innerHTML = markup;
+  });
 }
 
 // Show matching students as selectable search results.
