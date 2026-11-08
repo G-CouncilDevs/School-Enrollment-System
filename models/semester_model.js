@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const semesterSchema = new mongoose.Schema({
-    term:           {type: String, enum: ["1st", "2nd", "3rd"], trim: true, required: true,},
+    semester_term:  {type: String, enum: ["1st", "2nd", "3rd"], trim: true, required: true,},
     academic_year:  {type: Number, required: true},
     offerings:      [{
         _id: false,
@@ -10,7 +10,7 @@ const semesterSchema = new mongoose.Schema({
     }]  
 })
 
-semesterSchema.index({ academic_year: 1, term: 1 }, { unique: true })
+semesterSchema.index({ academic_year: 1, semester_term: 1 }, { unique: true })
 
 const Semester = mongoose.model("Semester", semesterSchema)
 
