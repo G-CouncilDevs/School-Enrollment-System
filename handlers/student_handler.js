@@ -33,10 +33,20 @@ export async function createStudent(req, res) {
 export async function getStudents(req, res) {
     try{
         const filter = {}
+        if (req.query.student_id !== undefined) {
+            const id = parseID(req.query.student_id)
+            if (id === null) {
+                return res.status(400).json({error: "student_id must be a number"})
+            }
+            filter._id = id
+        }
         if(req.query.last_name){
-            // Yeah that's regex, basically filters the special sybols, if someone decided to put a "*" it'll match everything, ts filters that
             const safe = String(req.query.last_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-            filter.last_name = new RegExp("^" + safe, "i")
+            const expression = new RegExp(safe, "i")
+            filter.$or = [
+                {first_name: expression},
+                {last_name: expression},
+            ]
         }
         //Amount of things that get displayed, pagination
         const page = Math.max(parseInt(req.query.page) || 1, 1)
