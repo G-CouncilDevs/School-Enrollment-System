@@ -3,6 +3,7 @@ import {
   createOrUpdateCourse,
   deleteSelectedCourse,
   loadCourses,
+  openCourseDeleteDialog,
   openCourseDialog,
   renderCourses,
 } from "./courses.js";
@@ -60,6 +61,14 @@ function bindDashboardEvents(loadData) {
   document.querySelector("#course-form")?.addEventListener("submit", (event) => {
     createOrUpdateCourse(event, loadData);
   });
+  document.querySelector("#delete-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const course = state.selectedCourseToDelete;
+    if (!course) return;
+
+    deleteSelectedCourse(course, loadData);
+    event.currentTarget.closest("dialog")?.close();
+  });
   document.querySelector("#student-form")?.addEventListener("submit", (event) => {
     updateStudent(event, loadData);
   });
@@ -85,7 +94,7 @@ function bindDashboardEvents(loadData) {
       const course = state.courses.find(
         (candidate) => String(candidate._id) === courseDelete.dataset.courseDelete,
       );
-      if (course) deleteSelectedCourse(course, loadData);
+      if (course) openCourseDeleteDialog(course);
       return;
     }
 

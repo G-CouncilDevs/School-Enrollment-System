@@ -11,5 +11,6 @@ export const state = {
   courseTotal: 0,
   studentTotal: 0,
   selectedCourse: null,
+  selectedCourseToDelete: null,
   selectedStudent: null,
 };

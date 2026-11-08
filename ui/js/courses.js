@@ -128,6 +128,17 @@ export function openCourseDialog(course = null) {
   dialog.showModal();
 }
 
+// Open the confirmation dialog for deleting a course.
+export function openCourseDeleteDialog(course) {
+  const dialog = document.querySelector("#delete-dialog");
+  const name = document.querySelector("#delete-name");
+  if (!dialog || !name) return;
+
+  state.selectedCourseToDelete = course;
+  name.textContent = `${course.code} · ${course.name}`;
+  dialog.showModal();
+}
+
 // Load one page of courses from the API and refresh related dashboard elements.
 export async function loadCourses(handleLoadError) {
   const input = document.querySelector("#course-search");
@@ -183,12 +194,13 @@ export async function createOrUpdateCourse(event, loadData) {
 
 // Delete a course after confirmation and refresh the dashboard.
 export async function deleteSelectedCourse(course, loadData) {
-  if (!window.confirm(`Delete ${course.code} · ${course.name}?`)) return;
   try {
     await deleteJson(`/courses/${course._id}`);
     showToast("Course deleted.");
     await loadData();
   } catch (error) {
     showToast(error.message, true);
+  } finally {
+    state.selectedCourseToDelete = null;
   }
 }
