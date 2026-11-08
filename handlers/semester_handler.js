@@ -1,9 +1,10 @@
-import Semester from "../models/semester_model.js"
+import Semester from "../models/semester_model"
 
+//POST
 export async function createSemester(req, res) {
     try{
         const newSemester = new Semester({
-            term:   req.body.term,
+            semester_term:   req.body.semester_term,
             academic_year:  req.body.academic_year,
             offerings:  req.body.offerings
         })
