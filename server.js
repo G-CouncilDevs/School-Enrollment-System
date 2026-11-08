@@ -31,6 +31,14 @@ app.use(
   }),
 );
 
+app.get(["/", "/index.html", "/enrollment.html"], (req, res, next) => {
+  if (!req.session.employeeId) {
+    return res.redirect("/login.html");
+  }
+
+  next();
+});
+
 app.use(express.static("ui"));
 
 // Routes
