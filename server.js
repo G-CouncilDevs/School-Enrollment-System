@@ -1,5 +1,6 @@
 import { connectToMongoDB, disconnectFromMongoDB } from "./DB.js";
 import express from "express";
+import session from "express-session";
 import studentRoutes from "./routes/student_routes.js";
 import enrollmentRoutes from "./routes/enrollment_routes.js";
 import courseRoutes from "./routes/course_routes.js";
@@ -10,6 +11,23 @@ import blockRoutes from "./routes/block_routes.js";
 
 const app = express();
 app.use(express.json());
+
+if (!process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET is required");
+}
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+    },
+  }),
+);
 
 app.use(express.static("ui"));
 
