@@ -7,6 +7,8 @@ import Student from "../models/student_model.js";
 import Enrollment from "../models/enrollment_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 
+const isId = (value) => mongoose.isValidObjectId(String(value))
+
 //POST
 export async function createBlock(req, res) {
     try{
@@ -28,26 +30,33 @@ export async function createBlock(req, res) {
 }
 
 //GET
-export async function getBlocks(params) {
+export async function getBlocks(req, res) {
     try{
         const filter = {}
-            if (req.query.section_name){
-                const safe = String(req.query.last_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-                filter.last_name = new RegExp("^" + safe, "i")
+
+        if (req.query.semester !== undefined) {
+            if (!isId(req.query.semester)) {
+                return res.status(400).json({error: "Invalid semester id"})
             }
-
-            const page = Math.max(parseInt(req.query.page) || 1, 1)
-            const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)
-
-            const [blocks, total] = await Promise.all([
-                Employee.find(filter)
-                    .sort({section_name: 1})
-                    .skip((page - 1) * limit)
-                    .limit(limit),
-                Employee.countDocuments(filter)
-            ])
-            res.status(200).json({page, limit, total, blocks})
+            filter.semester = req.query.semester
         }
+        if (req.query.section_name){
+            const safe = String(req.query.section_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            filter.section_name = new RegExp("^" + safe, "i")
+        }
+
+        const page = Math.max(parseInt(req.query.page) || 1, 1)
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)
+
+        const [blocks, total] = await Promise.all([
+            Block.find(filter)
+                .sort({section_name: 1})
+                .skip((page - 1) * limit)
+                .limit(limit),
+            Block.countDocuments(filter)
+        ])
+        res.status(200).json({page, limit, total, blocks})
+    }
     catch(err){
         res.status(500).json({error:err.message})
     }
@@ -60,7 +69,7 @@ export async function getBlock(req, res) {
         if (!isId(id)) return res.status(400).json({error: "Invalid block id"})
  
         const block = await Block.findById(id)
-            .populate({ path: "semester",         select: "term academic_year" })
+            .populate({ path: "semester",         select: "semester_term academic_year" })
             .populate({ path: "courses.course",   select: "code name units" })
             .populate({ path: "courses.employee", select: "first_name middle_name last_name" })
             .populate({ path: "students",         select: "first_name middle_name last_name" })
