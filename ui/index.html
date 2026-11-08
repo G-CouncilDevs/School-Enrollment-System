@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard · EiKuGa</title>
+  <title>Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
-<body>
+<body data-page="dashboard">
 
-  <!-- Top bar -->
+  <!-- Navbar -->
   <header class="navbar">
     <nav>
       <a href="index.html" class="active">Dashboard</a>
+      <a href="enrollment.html">Enrollments</a>
     </nav>
 
-    <!-- Top right Admin logout thing -->
     <details class="user-menu">
-      <summary><span class="avatar">AD</span> Admin ▾</summary>
+      <summary><span class="avatar" data-user-initials>AD</span> <span data-user-name>Admin</span> ▾</summary>
       <div class="user-menu-list">
-        <a href="login.html">Log out</a>
+        <a href="login.html" data-logout>Log out</a>
       </div>
     </details>
   </header>
@@ -27,34 +28,28 @@
   <main>
     <h1>Student &amp; Course Management</h1>
 
-    <!-- Numbers -->
+    <!-- Numbers should be filled in by script.js -->
     <section class="metrics">
-      <div class="dark"><p>Total Enrolled Students</p><strong>628</strong></div>
-      <div><p>Active Courses</p><strong>36</strong></div>
-      <div><p>Registered Students</p><strong>1,502</strong></div>
+      <div class="dark"><p>Total Enrolled Students</p><strong id="metric-enrolled">–</strong></div>
+      <div><p>Active Courses</p><strong id="metric-courses">—</strong></div>
+      <div><p>Registered Students</p><strong id="metric-students">–</strong></div>
     </section>
+    <p class="sub term-label" id="term-label"></p>
 
     <!-- Courses -->
     <section class="panel">
       <div class="panel-head">
         <div>
           <h2>Courses</h2>
-          <p class="sub">36 courses this term</p>
+          <p class="sub" id="course-total">Loading courses...</p>
         </div>
 
         <div class="row">
-          <input type="text" placeholder="Search courses…">
-          <select>
-            <option>All departments</option>
-            <option>Computer Science</option>
-            <option>Mathematics</option>
-            <option>English</option>
-            <option>Biology</option>
-            <option>Physics</option>
-            <option>History</option>
+          <input type="search" id="course-search" placeholder="Search courses…" aria-label="Search courses">
+          <select id="course-program" aria-label="Filter by program">
+            <option value="">All programs</option>
           </select>
-          <!-- + opens the Add Course popup (see the bottom of this page) -->
-          <a href="#add-course" class="btn" title="Add course">+</a>
+          <button type="button" class="btn" id="add-course-btn" title="Add course" aria-label="Add course">+</button>
         </div>
       </div>
 
@@ -62,61 +57,20 @@
         <table>
           <thead>
             <tr>
-              <th>Code</th>
               <th>Course</th>
-              <th>Instructor</th>
-              <th>Enrolled</th>
+              <th>Units</th>
+              <th>Prerequisites</th>
+              <th>Enrolled this term</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>CS101</td>
-              <td>Introduction to Programming</td>
-              <td>Dr. Maria Santos</td>
-              <td>42 / 50</td>
-              <td><a href="#edit-course" class="link">Edit</a> <a href="#delete-course" class="link danger">Delete</a></td>
-            </tr>
-            <tr>
-              <td>MATH201</td>
-              <td>Calculus II</td>
-              <td>Prof. Jon Reyes</td>
-              <td>38 / 40</td>
-              <td><a href="#edit-course" class="link">Edit</a> <a href="#delete-course" class="link danger">Delete</a></td>
-            </tr>
-            <tr>
-              <td>ENG105</td>
-              <td>Academic Writing</td>
-              <td>Dr. Ana Cruz</td>
-              <td>29 / 35</td>
-              <td><a href="#edit-course" class="link">Edit</a> <a href="#delete-course" class="link danger">Delete</a></td>
-            </tr>
-            <tr>
-              <td>BIO110</td>
-              <td>General Biology</td>
-              <td>Prof. Leo Bautista</td>
-              <td>45 / 45</td>
-              <td><a href="#edit-course" class="link">Edit</a> <a href="#delete-course" class="link danger">Delete</a></td>
-            </tr>
-            <tr>
-              <td>PHY150</td>
-              <td>Physics for Engineers</td>
-              <td>Dr. Carla Dizon</td>
-              <td>31 / 40</td>
-              <td><a href="#edit-course" class="link">Edit</a> <a href="#delete-course" class="link danger">Delete</a></td>
-            </tr>
-            <tr>
-              <td>HIS102</td>
-              <td>World History</td>
-              <td>Prof. Mark Lim</td>
-              <td>24 / 35</td>
-              <td><a href="#edit-course" class="link">Edit</a> <a href="#delete-course" class="link danger">Delete</a></td>
-            </tr>
+          <tbody id="course-rows">
+            <tr><td colspan="5" class="empty">Loading…</td></tr>
           </tbody>
         </table>
       </div>
 
-      <p class="sub">Showing 6 of 36 courses</p>
+      <p class="sub" id="course-count"></p>
     </section>
 
     <!-- Student search -->
@@ -124,81 +78,62 @@
       <div class="panel-head">
         <h2>Search Students</h2>
         <div class="row">
-          <input type="text" value="Mar" placeholder="Search by name or ID…">
-          <select>
-            <option>CS101 · Introduction to Programming</option>
-            <option>MATH201 · Calculus II</option>
-            <option>ENG105 · Academic Writing</option>
-            <option>BIO110 · General Biology</option>
-            <option>PHY150 · Physics for Engineers</option>
-            <option>HIS102 · World History</option>
+          <input type="search" id="student-search" placeholder="Search by name or ID…" aria-label="Search students">
+          <select id="student-course" aria-label="Only students taking this course">
+            <option value="">All students</option>
           </select>
         </div>
       </div>
 
-      <ul class="students">
-        <li><span><strong>Maria Lopez</strong><br><small>2024-0142 · BS Computer Science</small></span><span class="badge">Enrolled</span></li>
-        <li><span><strong>Paolo Garcia</strong><br><small>2024-0157 · BS Information Technology</small></span><span class="badge">Enrolled</span></li>
-        <li><span><strong>Angela Tan</strong><br><small>2024-0163 · BS Computer Science</small></span><span class="badge">Enrolled</span></li>
-        <li><span><strong>Rafael Mendoza</strong><br><small>2024-0171 · BS Computer Engineering</small></span><span class="badge">Enrolled</span></li>
-        <li><span><strong>Sofia Navarro</strong><br><small>2024-0188 · BS Information Systems</small></span><span class="badge">Enrolled</span></li>
+      <ul class="students" id="student-list">
+        <li class="empty">Loading…</li>
       </ul>
 
-      <p class="sub">42 students enrolled</p>
+      <p class="sub" id="student-count"></p>
     </section>
   </main>
 
-  <!-- ===== Popups =====
-       Each one is hidden until a link points to its id (for example href="#add-course").
-       The Cancel links point to "#", which closes them. -->
-
-  <div class="modal" id="add-course">
+  <dialog class="modal" id="course-dialog">
     <div class="modal-box">
-      <h2>Add Course</h2>
-      <form>
-        <label>Course code <input type="text" name="course_code" placeholder="e.g. CS101"></label>
-        <label>Course name <input type="text" name="course_name" placeholder="e.g. Introduction to Programming"></label>
-        <label>Instructor <input type="text" name="instructor" placeholder="e.g. Dr. Maria Santos"></label>
-        <label>Capacity <input type="number" name="capacity" placeholder="e.g. 40" min="1"></label>
+      <h2 id="course-dialog-title">Add Course</h2>
+      <form id="course-form" novalidate>
+        <label>Course name
+          <input type="text" name="name" placeholder="e.g. Introduction to Programming" required maxlength="120">
+          <span class="field-error" data-error-for="name"></span>
+        </label>
+        <label>Units
+          <input type="number" name="units" placeholder="e.g. 3" min="1" max="10" step="1" required>
+          <span class="field-error" data-error-for="units"></span>
+        </label>
+        <fieldset class="checklist">
+          <legend>Prerequisites (optional)</legend>
+          <div id="prereq-list" class="checklist-box"></div>
+        </fieldset>
 
         <div class="modal-buttons">
-          <a href="#" class="btn light">Cancel</a>
-          <button type="submit" class="btn">Add Course</button>
+          <button type="button" class="btn light" data-close>Cancel</button>
+          <button type="submit" class="btn" id="course-submit">Add Course</button>
         </div>
       </form>
     </div>
-  </div>
+  </dialog>
 
-  <div class="modal" id="edit-course">
-    <div class="modal-box">
-      <h2>Edit Course</h2>
-      <form>
-        <label>Course code <input type="text" name="course_code" value="CS101"></label>
-        <label>Course name <input type="text" name="course_name" value="Introduction to Programming"></label>
-        <label>Instructor <input type="text" name="instructor" value="Dr. Maria Santos"></label>
-        <label>Capacity <input type="number" name="capacity" value="50" min="1"></label>
-
-        <div class="modal-buttons">
-          <a href="#" class="btn light">Cancel</a>
-          <button type="submit" class="btn">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal" id="delete-course">
+  <dialog class="modal" id="delete-dialog">
     <div class="modal-box">
       <h2>Delete course?</h2>
-      <form>
-        <p>You’re about to delete this course. This can’t be undone.</p>
+      <form id="delete-form">
+        <p>You're about to delete <strong id="delete-name">this course</strong>. This can't be undone.</p>
 
         <div class="modal-buttons">
-          <a href="#" class="btn light">Cancel</a>
+          <button type="button" class="btn light" data-close>Cancel</button>
           <button type="submit" class="btn danger">Delete</button>
         </div>
       </form>
     </div>
-  </div>
+  </dialog>
+
+  <!-- Success and error messages pop up here -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 </body>
 </html>
