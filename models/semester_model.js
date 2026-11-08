@@ -5,6 +5,8 @@ const semesterSchema = new mongoose.Schema({
     academic_year:  {type: Number, required: true},
     offerings:      [{
         _id: false,
+        capacity:       {type: Number, required: true, min: 0},
+        enrolled:       {type: Number, default: 0, min: 0},
         course:         {type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true},
         course_active:  {type: Boolean,  default: true}
     }]  
