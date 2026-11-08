@@ -1,6 +1,8 @@
 import Student from "../models/student_model.js";
 import Enrollment from "../models/enrollment_model.js"
 import Block from "../models/block_model.js";
+import CourseEnrollment from "../models/course_enrollment_model.js";
+import CourseRecord from "../models/course_record_model.js";
 import { nextStudentID } from "../models/studentID_generator.js";
 
 // Since MonggoDB passes the special ID to a String, this parses it into a Number
@@ -33,20 +35,10 @@ export async function createStudent(req, res) {
 export async function getStudents(req, res) {
     try{
         const filter = {}
-        if (req.query.student_id !== undefined) {
-            const id = parseID(req.query.student_id)
-            if (id === null) {
-                return res.status(400).json({error: "student_id must be a number"})
-            }
-            filter._id = id
-        }
         if(req.query.last_name){
+            // Yeah that's regex, basically filters the special sybols, if someone decided to put a "*" it'll match everything, ts filters that
             const safe = String(req.query.last_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-            const expression = new RegExp(safe, "i")
-            filter.$or = [
-                {first_name: expression},
-                {last_name: expression},
-            ]
+            filter.last_name = new RegExp("^" + safe, "i")
         }
         //Amount of things that get displayed, pagination
         const page = Math.max(parseInt(req.query.page) || 1, 1)
@@ -135,6 +127,12 @@ export async function deleteStudent(req, res) {
         }
         if (await Block.exists({ students: id })) {
             return res.status(409).json({error: "Cannot delete: this student is in a block"})
+        }
+        if (await CourseEnrollment.exists({ student: id })) {
+            return res.status(409).json({error: "Cannot delete: this student is Enrolled in a course"})
+        }
+        if (await CourseRecord.exists({ student: id })) {
+            return res.status(409).json({error: "Cannot delete: this student has course record"})
         }
  
         await Student.findByIdAndDelete(id)

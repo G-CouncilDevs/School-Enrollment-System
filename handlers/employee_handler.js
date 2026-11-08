@@ -1,4 +1,3 @@
-import Semester from "../models/semester_model.js"
 import Employee from "../models/employee_model.js";
 import Enrollment from "../models/enrollment_model.js";
 import Block from "../models/block_model.js";

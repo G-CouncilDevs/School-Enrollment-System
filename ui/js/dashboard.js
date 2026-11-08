@@ -32,8 +32,8 @@ async function loadEnrollmentData() {
     requestJson("/enrollments"),
     requestJson("/blocks"),
   ]);
-  state.enrollments = enrollments || [];
-  state.blocks = blocks || [];
+  state.enrollments = enrollments?.enrollments || enrollments || [];
+  state.blocks = blocks?.blocks || blocks || [];
   document.querySelector("#metric-enrolled").textContent = new Set(
     state.enrollments.map((enrollment) => enrollment.student),
   ).size;

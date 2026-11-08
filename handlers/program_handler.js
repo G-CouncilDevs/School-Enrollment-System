@@ -44,6 +44,25 @@ export async function getPrograms(req, res) {
     }
 }
 
+//GET id
+export async function getProgram(req, res) {
+    try{
+        const id = req.params.id
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({error: "Invalid program id"})
+        }
+
+        const program = await Program.findById(id)
+            .populate({ path: "courses.course", select: "code name units" })
+        if (!program) return res.status(404).json({error: "Program not found"})
+
+        res.status(200).json(program)
+    }
+    catch(err){
+        res.status(500).json({error:err.message})
+    }
+}
+
 //PUT
 export async function updateProgram(req, res) {
     try{
