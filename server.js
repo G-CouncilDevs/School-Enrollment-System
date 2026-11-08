@@ -9,6 +9,7 @@ import programRoutes from "./routes/program_routes.js";
 import semesterRoutes from "./routes/semester_routes.js";
 import blockRoutes from "./routes/block_routes.js";
 import authRoutes from "./routes/auth_routes.js";
+import { requireAuth } from "./middleware/auth_middleware.js";
 
 const app = express();
 app.use(express.json());
@@ -34,6 +35,7 @@ app.use(express.static("ui"));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api", requireAuth);
 app.use("/api/students", studentRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/courses", courseRoutes);
