@@ -7,7 +7,7 @@ const enrollmentSchema= new mongoose.Schema({
     semester:       { type: mongoose.Schema.Types.ObjectId, ref: "Semester", required: true },
     block:          { type: mongoose.Schema.Types.ObjectId, ref: "Block", required: true },
     standing_year: Number
-})
+}, { timestamps: true })
 
 enrollmentSchema.index({ student: 1, semester: 1 }, { unique: true })
 
