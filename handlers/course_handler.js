@@ -4,6 +4,7 @@ import Semester from "../models/semester_model.js";
 import Block from "../models/block_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
+import mongoose from "mongoose";
 
 //POST
 export async function createCourse(req, res) {
@@ -23,12 +24,16 @@ export async function createCourse(req, res) {
 }
 
 //GET
-export async function geteCourses(req, res) {
+export async function getCourses(req, res) {
     try{
         const filter = {}
         if(req.query.name){
             const safe = String(req.query.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
             filter.name= new RegExp("^" + safe, "i")
+        }
+        if(req.query.code){
+            const safe = String(req.query.code).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            filter.code = new RegExp("^" + safe + "$", "i")
         }
 
         const page = Math.max(parseInt(req.query.page) || 1, 1)
@@ -41,7 +46,7 @@ export async function geteCourses(req, res) {
                 .limit(limit),
             Course.countDocuments(filter)
         ])
-        res.status(200).json({page, lmit, total, courses})
+        res.status(200).json({page, limit, total, courses})
     }
     catch(err){
         res.status(500).json({error:err.message})
@@ -51,14 +56,15 @@ export async function geteCourses(req, res) {
 //GET id
 export async function getCourse(req, res) {
     try{
-        const code = String(req.params.code ?? "").trim().toUpperCase()
+        const id = String(req.params.id ?? "")
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({error: "Invalid course id"})
+        }
 
-        if (!code) return res.status(400).json({error: "Course Code Required"})
+        const course = await Course.findById(id)
+        if(!course) return res.status(404).json({error: "Course not found"})
 
-        const course = await Course.findOne({code})
-        if(!course) return res.status(404).json({errorL: "Course Code not found"})
-
-        res.status(200).json(code)
+        res.status(200).json(course)
     }
     catch(err){
         res.status(500).json({error:err.message})
@@ -68,10 +74,12 @@ export async function getCourse(req, res) {
 //PUT
 export async function updateCourse(req, res) {
     try{
-        const code = normalizeCode(req.params.code)
-        if (!code) return res.status(400).json({error: "Course Code required"})
+        const id = String(req.params.id ?? "")
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({error: "Invalid course id"})
+        }
 
-        const course = await Course.findOne({code})
+        const course = await Course.findById(id)
         if (!course) return res.status(404).json({error: "Course not found"})
 
         const changes = {}
@@ -108,12 +116,13 @@ export async function updateCourse(req, res) {
 //DELETE
 export async function deleteCourse(req, res) {
     try{
-        const code = normalizeCode(req.params.code)
-        if (!code) return res.status(400).json({error: "Course code required"})
+        const id = String(req.params.id ?? "")
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({error: "Invalid course id"})
+        }
 
-        const course = await Course.findOne({ code })
+        const course = await Course.findById(id)
         if (!course) return res.status(404).json({error: "Course not found"})
-        const id = course._id
 
         const used = await Promise.all([
             Course.exists({ prerequisites: id }),
@@ -137,7 +146,7 @@ export async function deleteCourse(req, res) {
         }
 
         await Course.findByIdAndDelete(id)
-        res.status(200).json({message: "Course deleted", code})
+        res.status(200).json({message: "Course deleted", _id: id})
     }
     catch(err){
         res.status(500).json({error:err.message})
