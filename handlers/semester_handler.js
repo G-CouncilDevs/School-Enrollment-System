@@ -1,4 +1,3 @@
-import Semester from "../models/semester_model"
 import mongoose from "mongoose";
 import Semester from "../models/semester_model.js";
 import Course from "../models/course_model.js";
@@ -30,9 +29,18 @@ export async function createSemester(req, res) {
 export async function getSemesters(req, res) {
     try{
         const filter = {}
-        if (req.query.academic_year){
-            const safe = String(req.query.academic_year).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-            filter.last_name = new RegExp("^" + safe, "i")
+        if (req.query.academic_year !== undefined) {
+            const year = Number(req.query.academic_year)
+            if (!Number.isInteger(year)) {
+                return res.status(400).json({error: "academic_year must be a number"})
+            }
+            filter.academic_year = year
+            }
+        if (req.query.semester_term !== undefined) {
+            if (!["1st", "2nd", "3rd"].includes(req.query.semester_term)) {
+                return res.status(400).json({error: "semester_term must be 1st, 2nd or 3rd"})
+            }
+            filter.semester_term = req.query.semester_term
         }
 
         const page = Math.max(parseInt(req.query.page) || 1, 1)
@@ -53,7 +61,7 @@ export async function getSemesters(req, res) {
 }
 
 //GET id
-export async function getSemester(req, res) {
+ export async function getSemester(req, res) {
     try{
         const id = req.params.id
         if(!mongoose.isValidObjectId(id)){
@@ -61,14 +69,20 @@ export async function getSemester(req, res) {
         }
 
         const semester = await Semester.findById(id)
+            .populate({ path: "offerings.course", select: "code name units" })
+
         if (!semester) return res.status(404).json({error: "Semester not found"})
-        
-        res.status(200).json(semester)
+
+        // Add the seats left to each offering (calculated, never stored)
+
+        const data = semester.toObject()
+        data.offerings = data.offerings.map(o => ({ ...o, available: o.capacity - o.enrolled }))
+        res.status(200).json(data)
     }
     catch(err){
         res.status(500).json({error:err.message})
     }
-}
+} 
 
 //PUT
 export async function updateSemester(req, res) {
@@ -82,7 +96,7 @@ export async function updateSemester(req, res) {
         if (!semester) return res.status(404).json({error: "Semester not found"})
 
         const changes = {}
-        for (const field of ["term", "academic_year"]) {
+        for (const field of ["semester_term", "academic_year"]) {
             if (req.body[field] !== undefined) changes[field] = req.body[field]
         }
 
