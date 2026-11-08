@@ -34,3 +34,5 @@ start().catch((err) =>{
     console.error("Failed to Start:", err);
     process.exit(1);
 });
+
+//RUN WITH NPM, NOT NODE. Dumbass
