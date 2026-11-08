@@ -5,10 +5,6 @@ import Block from "../models/block_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
 
-function normalizeCode(raw) {
-    return String(raw ?? "").trim().toUpperCase()
-}
-
 //POST
 export async function createCourse(req, res) {
     try{
@@ -30,13 +26,20 @@ export async function createCourse(req, res) {
 }
 
 //GET
-//GET
 export async function getCourses(req, res) {
     try{
         const filter = {}
+        if (req.query.search) {
+            const safe = String(req.query.search).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            const expression = new RegExp(safe, "i")
+            filter.$or = [
+                {name: expression},
+                {code: expression},
+            ]
+        }
         if (req.query.code){
             const safe = String(req.query.code).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-            filter.code = new RegExp("^" + safe, "i")
+            filter.code = new RegExp("^" + safe + "$", "i")
         }
         if (req.query.name){
             const safe = String(req.query.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -63,12 +66,13 @@ export async function getCourses(req, res) {
 //GET id
 export async function getCourse(req, res) {
     try{
-        const code = String(req.params.code ?? "").trim().toUpperCase()
+        const id = String(req.params.id ?? "")
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({error: "Invalid course id"})
+        }
 
-        if (!code) return res.status(400).json({error: "Course Code Required"})
-
-        const course = await Course.findOne({code})
-        if(!course) return res.status(404).json({error: "Course Code not found"})
+        const course = await Course.findById(id)
+        if(!course) return res.status(404).json({error: "Course not found"})
 
         res.status(200).json(course)
     }
@@ -80,10 +84,12 @@ export async function getCourse(req, res) {
 //PUT
 export async function updateCourse(req, res) {
     try{
-        const code = normalizeCode(req.params.code)
-        if (!code) return res.status(400).json({error: "Course Code required"})
+        const id = String(req.params.id ?? "")
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({error: "Invalid course id"})
+        }
 
-        const course = await Course.findOne({code})
+        const course = await Course.findById(id)
         if (!course) return res.status(404).json({error: "Course not found"})
 
         const changes = {}

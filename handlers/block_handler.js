@@ -55,7 +55,12 @@ export async function getBlocks(req, res) {
                 .limit(limit),
             Block.countDocuments(filter)
         ])
-        res.status(200).json({page, limit, total, blocks})
+        const populated = await Block.populate(blocks, [
+            { path: "semester", select: "semester_term academic_year" },
+            { path: "courses.course", select: "code name units" },
+            { path: "courses.employee", select: "first_name middle_name last_name" },
+        ])
+        res.status(200).json({page, limit, total, blocks: populated})
     }
     catch(err){
         res.status(500).json({error:err.message})
