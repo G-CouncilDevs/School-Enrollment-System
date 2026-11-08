@@ -23,8 +23,8 @@ export async function getPrograms(req, res) {
     try{
         const filter = {}
         if (req.query.name){
-            const safe = String(req.query.last_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-            filter.last_name = new RegExp("^" + safe, "i")
+            const safe = String(req.query.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            filter.name = new RegExp("^" + safe, "i")
         }
 
         const page = Math.max(parseInt(req.query.page) || 1, 1)

@@ -2,7 +2,6 @@ import Student from "../models/student_model.js";
 import Enrollment from "../models/enrollment_model.js"
 import Block from "../models/block_model.js";
 import { nextStudentID } from "../models/studentID_generator.js";
-import { ReturnDocument } from "mongodb";
 
 // Since MonggoDB passes the special ID to a String, this parses it into a Number
 function parseID(raw){
@@ -99,7 +98,7 @@ export async function updateStudent(req, res) {
         const updated = await Student.findByIdAndUpdate(
             id,
             { $set: changes},
-            { ReturnDocument: "after", runValidators: true}
+            { new: true, runValidators: true}
         )
 
         if (!updated) return res.status(404).json({error: "Student not found"})
