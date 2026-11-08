@@ -129,6 +129,8 @@ input[type="checkbox"] { width: 16px; height: 16px; padding: 0; }
 }
 
 .btn.light { color: #0f172a; background: #fff; border: 1px solid #cbd5e1; }
+.btn.danger { background: var(--red); }
+.link.danger { color: var(--red); }
 
 .link { font-weight: 600; text-decoration: none; color: #1d4ed8; }
 
@@ -210,11 +212,104 @@ td { padding: 14px 8px; border-top: 1px solid var(--line); }
 .form-footer span { color: var(--gray); }
 .form-footer div { display: flex; gap: 12px; }
 
+/* ---------- Existing-student search results ---------- */
+.find { position: relative; }
+.results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  max-height: 260px;
+  overflow: auto;
+  margin: 6px 0 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.25);
+}
+.results button { display: block; width: 100%; padding: 10px 12px; font: inherit; text-align: left; background: none; border: 0; border-radius: 6px; cursor: pointer; }
+.results button:hover, .results button:focus { background: #f1f5f9; outline: none; }
+.results small { color: var(--gray); }
+.results .none { padding: 10px 12px; color: var(--gray); }
+
+.details-head { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+.details-head h3 { margin: 0; }
+.details-head + .grid { margin-top: 12px; }
+.courses .empty { grid-column: 1 / -1; padding: 14px; border: 1px dashed #cbd5e1; border-radius: 8px; }
+.courses label input { flex-shrink: 0; margin-top: 2px; }
+.courses .remove { margin-left: auto; padding: 0 4px; font-size: 18px; line-height: 1; color: var(--gray); background: none; border: 0; cursor: pointer; }
+
+/* ---------- Validation messages ---------- */
+.field-error { min-height: 0; font-size: 13px; font-weight: 500; color: var(--red); }
+.field-error:empty { display: none; }
+.invalid { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12); }
+
+/* ---------- Toast (success / error popup) ---------- */
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 14px 18px;
+  font-weight: 500;
+  color: #fff;
+  background: #15803d;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.35);
+}
+.toast.error { background: var(--red); }
+
+.empty { color: var(--gray); text-align: center; }
+.term-label { margin: -14px 0 20px; }
+.term-label:empty { display: none; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn.small { padding: 7px 12px; font-size: 14px; }
+.link { padding: 0; font: inherit; font-weight: 600; background: none; border: 0; cursor: pointer; }
+.link + .link { margin-left: 12px; }
+
+/* ---------- Popups (<dialog>, opened by script.js) ---------- */
+dialog.modal { width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px); padding: 0; border: 0; border-radius: 14px; }
+dialog.modal::backdrop { background: rgba(15, 23, 42, 0.5); }
+.modal-box { padding: 24px; background: #fff; }
+.modal-box h2 { margin: 0 0 16px; font-size: 20px; }
+.modal-box form { display: flex; flex-direction: column; gap: 14px; }
+.modal-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+.modal-box p { margin: 0; }
+
+
+/* ---------- Student popup, term bar, small extras ---------- */
+.span-all { grid-column: 1 / -1; }
+.address-row { display: grid; grid-template-columns: 2fr 1.3fr 1.3fr 1.3fr; gap: inherit; }
+dialog.modal.wide { width: min(760px, calc(100% - 32px)); }
+.modal .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.modal-buttons.spread { justify-content: space-between; align-items: center; }
+.modal-buttons .row { display: flex; gap: 12px; }
+.btn.danger-text { color: var(--red); }
+.btn.danger-text:hover:not(:disabled) { background: #fef2f2; border-color: #fecaca; }
+.row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+
+.term-bar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin: -8px 0 20px; }
+.term-bar label { min-width: 240px; }
+.term-bar .sub { flex-basis: 100%; margin: 0; }
+.term-bar .sub:empty { display: none; }
+.panel h2 .sub { margin-left: 6px; font-size: 15px; font-weight: 500; }
+
 /* ---------- Small screens ---------- */
 @media (max-width: 900px) {
   .navbar { padding: 0 16px; }
-  .navbar nav a { margin-right: 0; }
-  .grid, .courses { grid-template-columns: 1fr; }
+  .navbar nav { display: flex; gap: 4px; }
+  .navbar nav a { margin-right: 0; padding: 8px 10px; white-space: nowrap; }
+  .user-menu [data-user-name] { display: none; }   /* just the initials on phones */
+  .grid, .courses, .modal .grid, .address-row { grid-template-columns: 1fr; }
+  .term-bar label { flex: 1 1 100%; min-width: 0; }
+  .term-bar .btn { flex: 1; }
+  .details-head { flex-wrap: wrap; gap: 10px; }
+  .modal-buttons.spread { flex-direction: column-reverse; align-items: stretch; }
+  .modal-buttons .row > * { flex: 1; }
   .panel-head, .form-footer, .add-row { flex-direction: column; align-items: stretch; }
   .form-footer { gap: 14px; }
   .form-footer div { flex-direction: column-reverse; }
