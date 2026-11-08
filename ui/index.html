@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <!-- demo.js only switches on when you open the page as a file or add ?demo (see the top of demo.js) -->
   <script src="demo.js" defer></script>
-  <script src="script.js" defer></script>
+  <script type="module" src="script.js"></script>
 </head>
 <body data-page="dashboard">
 
@@ -74,6 +74,7 @@
       </div>
 
       <p class="sub" id="course-count"></p>
+      <div class="row pagination" id="course-pagination" aria-label="Course pages"></div>
     </section>
 
     <!-- Student search -->
@@ -93,6 +94,7 @@
       </ul>
 
       <p class="sub" id="student-count"></p>
+      <div class="row pagination" id="student-pagination" aria-label="Student pages"></div>
     </section>
   </main>
 
@@ -104,6 +106,10 @@
     <div class="modal-box">
       <h2 id="course-dialog-title">Add Course</h2>
       <form id="course-form" novalidate>
+        <label>Course code
+          <input type="text" name="code" placeholder="e.g. CS101" required maxlength="20">
+          <span class="field-error" data-error-for="code"></span>
+        </label>
         <label>Course name
           <input type="text" name="name" placeholder="e.g. Introduction to Programming" required maxlength="120">
           <span class="field-error" data-error-for="name"></span>
