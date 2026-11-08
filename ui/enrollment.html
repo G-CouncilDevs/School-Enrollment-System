@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enrollment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="enrollment.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <nav>
+      <a href="index.html">Dashboard</a>
+      <a href="enrollment.html" class="active">Enrollments</a>
+    </nav>
+
+    <details class="user-menu">
+      <summary><span class="avatar">AD</span> Admin ▾</summary>
+      <div class="user-menu-list">
+        <a href="login.html">Log out</a>
+      </div>
+    </details>
+  </header>
+
+  <main>
+    <h1>Enrollment</h1>
+
+    <section class="panel">
+      <!-- These radio buttons are hidden. They switch with the labels -->
+      <input type="radio" name="mode" id="mode-new" class="mode" checked>
+      <input type="radio" name="mode" id="mode-existing" class="mode">
+
+      <div class="panel-head">
+        <h2>Enroll a Student</h2>
+        <div class="tabs">
+          <label for="mode-new">New enrollee</label>
+          <label for="mode-existing">Existing student</label>
+        </div>
+      </div>
+
+      <form>
+
+        <!-- ==================== NEW ENROLLEE ==================== -->
+        <div class="only-new">
+          <h3>Student details</h3>
+          <div class="grid">
+            <label>Student ID
+              <input type="text" name="student_id" placeholder="Not needed for 1st year" disabled>
+            </label>
+            <label>First name <input type="text" name="first_name"></label>
+            <label>Middle name (optional) <input type="text" name="middle_name" placeholder="e.g. Santos"></label>
+            <label>Last name <input type="text" name="last_name"></label>
+            <label>Sex
+              <select name="sex">
+                <option value="">Select sex</option>
+                <option>Male</option>
+                <option>Female</option>
+              </select>
+            </label>
+            <label>Address <input type="text" name="address"></label>
+            <label>Birthdate <input type="date" name="birthdate"></label>
+            <label>Year level
+              <select name="year_level">
+                <option value="">Select year level</option>
+                <option value="1">1st year</option>
+                <option value="2">2nd year</option>
+                <option value="3">3rd year</option>
+                <option value="4">4th year</option>
+              </select>
+            </label>
+            <label>Program
+              <select name="program_id">
+                <option value="">Select program</option>
+                <option value="1">BS Computer Science – Software Engineering</option>
+                <option value="2">BS Information Technology – Web Development</option>
+              </select>
+            </label>
+          </div>
+
+          <h3>Section &amp; courses</h3>
+          <label>Section
+            <select name="section">
+              <option value="">Select section</option>
+              <option>BSIT-1A</option>
+            </select>
+          </label>
+          <p class="sub">Pick a section to see its required courses.</p>
+
+          <div class="courses"></div>
+        </div>
+
+        <!-- ==================== EXISTING STUDENT ==================== -->
+        <div class="only-existing">
+          <label class="find">Search by name or Student ID
+            <input type="text" placeholder="e.g. Maria or 2024-0142">
+          </label>
+
+          <h3>Student details</h3>
+          <div class="grid">
+            <label>Student ID <input type="text" name="student_id" disabled></label>
+            <label>First name <input type="text" name="first_name" disabled></label>
+            <label>Middle name (optional) <input type="text" name="middle_name" disabled></label>
+            <label>Last name <input type="text" name="last_name" disabled></label>
+            <label>Sex
+              <select name="sex" disabled>
+                <option value="">Select sex</option>
+              </select>
+            </label>
+            <label>Address <input type="text" name="address" disabled></label>
+            <label>Birthdate <input type="date" name="birthdate" disabled></label>
+            <label>Year level
+              <select name="year_level" disabled>
+                <option value="">Select year level</option>
+              </select>
+            </label>
+            <label>Program
+              <select name="program_id" disabled>
+                <option value="">Select program</option>
+              </select>
+            </label>
+          </div>
+
+          <h3>Section &amp; courses</h3>
+          <label>Section
+            <select name="section">
+              <option value="">Select section</option>
+              <option>BSIT-2A</option>
+            </select>
+          </label>
+          <p class="sub">Pick a section to see its courses.</p>
+          <div class="courses"></div>
+        </div>
+
+        <!-- For both: add an extra course for this student only -->
+        <div class="add-row">
+          <label>Add a course for this student
+            <select name="extra_course">
+              <option value="">Select a course…</option>
+              <optgroup label="Courses outside this section">
+                <option>MATH101 · College Algebra</option>
+                <option>HIS102 · World History</option>
+                <option>CHEM101 · General Chemistry</option>
+              </optgroup>
+              <optgroup label="Prerequisite not met">
+                <option>MATH201 · Calculus II (needs MATH101, override)</option>
+                <option>PHY150 · Physics for Engineers (needs MATH201, override)</option>
+              </optgroup>
+            </select>
+          </label>
+          <button type="button" class="btn">Add course</button>
+        </div>
+
+        <div class="form-footer">
+          <span>Student ID is only needed after 1st year. Program is only needed for 1st year.</span>
+          <div>
+            <button type="reset" class="btn light">Cancel</button>
+            <button type="submit" class="btn">Enroll Student</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- New enrollees -->
+    <section class="panel">
+      <h2>New Enrollees</h2>
+      <p class="sub">Students you enroll show up here. Click Edit to change one.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Year</th>
+              <th>Section</th>
+              <th>Courses</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="6">No new enrollees yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>
