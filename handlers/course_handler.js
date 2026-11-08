@@ -27,6 +27,14 @@ export async function createCourse(req, res) {
 export async function getCourses(req, res) {
     try{
         const filter = {}
+        if (req.query.search) {
+            const safe = String(req.query.search).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            const expression = new RegExp(safe, "i")
+            filter.$or = [
+                {name: expression},
+                {code: expression},
+            ]
+        }
         if(req.query.name){
             const safe = String(req.query.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
             filter.name= new RegExp("^" + safe, "i")
