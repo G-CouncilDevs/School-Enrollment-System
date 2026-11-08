@@ -28,17 +28,6 @@
   <main>
     <h1>Enrollment</h1>
 
-    <!-- For which term -->
-    <section class="term-bar">
-      <label>Term
-        <select id="term-select">
-          <option value="">Loading terms…</option>
-        </select>
-      </label>
-      <button type="button" class="btn light" id="add-term">+ New term</button>
-      <p class="sub" id="term-note"></p>
-    </section>
-
     <section class="panel">
       <!-- These radio buttons are hidden. They switch with the labels -->
       <input type="radio" name="mode" id="mode-new" class="mode" value="new" checked>
@@ -52,9 +41,23 @@
         </div>
       </div>
 
-      <!-- novalidate: script.js checks only the fields of the mode you're in,
-           then sends the data itself (so hidden/disabled fields don't get in the way) -->
       <form id="enroll-form" novalidate>
+
+        <h3 class="first">Term</h3>
+        <div class="grid">
+          <label>Term
+            <select id="enroll-term">
+              <option value="1st">1st term</option>
+              <option value="2nd">2nd term</option>
+              <option value="3rd">3rd term</option>
+            </select>
+            <span class="field-error" data-error-for="term"></span>
+          </label>
+          <label>Academic year
+            <select id="enroll-year"></select>
+          </label>
+        </div>
+        <p class="sub" id="term-note"></p>
 
         <!-- ==================== NEW ENROLLEE ==================== -->
         <div class="only-new" id="new-part">
@@ -217,7 +220,7 @@
     <!-- This term's enrollments -->
     <section class="panel">
       <h2>Enrolled This Term <span class="sub" id="table-term"></span></h2>
-      <p class="sub">Students you enroll show up here. Click Edit to change an enrollment, or a student’s name to edit or delete the student.</p>
+      <p class="sub">Students you enroll show up here. Click Edit to change an enrollment, or a student's name to edit or delete the student.</p>
 
       <div class="table-wrap">
         <table>
@@ -253,31 +256,6 @@
   </dialog>
 
 
-  <dialog class="modal" id="term-dialog">
-    <div class="modal-box">
-      <h2>Add a Term</h2>
-      <form id="term-form" novalidate>
-        <label>Term
-          <select name="term" required>
-            <option value="">Select term</option>
-            <option value="1st">1st</option>
-            <option value="2nd">2nd</option>
-            <option value="3rd">3rd</option>
-          </select>
-          <span class="field-error" data-error-for="term"></span>
-        </label>
-        <label>Academic year
-          <input type="number" name="academic_year" min="2000" max="2100" step="1" placeholder="e.g. 2026" required>
-          <span class="field-error" data-error-for="academic_year"></span>
-        </label>
-        <p class="sub">You’ll need to set up sections for a new term before you can enroll students into it.</p>
-        <div class="modal-buttons">
-          <button type="button" class="btn light" data-close>Cancel</button>
-          <button type="submit" class="btn" id="term-submit">Add Term</button>
-        </div>
-      </form>
-    </div>
-  </dialog>
 
   <!-- Edit student popup (same fields as the enrollment page). script.js fills it in. -->
   <dialog class="modal wide" id="student-dialog">
@@ -346,7 +324,7 @@
     <div class="modal-box">
       <h2>Delete student?</h2>
       <form id="student-delete-form">
-        <p>You’re about to delete <strong id="student-delete-name">this student</strong><span id="student-delete-extra"></span>. This can’t be undone.</p>
+        <p>You're about to delete <strong id="student-delete-name">this student</strong><span id="student-delete-extra"></span>. This can't be undone.</p>
         <div class="modal-buttons">
           <button type="button" class="btn light" data-close>Cancel</button>
           <button type="submit" class="btn danger">Delete</button>
