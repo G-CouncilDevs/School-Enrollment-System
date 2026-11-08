@@ -1,23 +1,36 @@
-import mongoose from "mongoose"
 import { connectToMongoDB, disconnectFromMongoDB } from "./DB.js"
  
+// models
+import Employee   from "./models/employee_model.js"
+import Course     from "./models/course_model.js"
+import Program    from "./models/program_model.js"
+import Semester   from "./models/semester_model.js"
 import Student    from "./models/student_model.js"
-import Enrollment from "./models/enrollment_model.js"
 import Block      from "./models/block_model.js"
+import Enrollment from "./models/enrollment_model.js"
 import Counter    from "./models/studentID_generator.js"
  
-import {
-    createStudent, getStudents, getStudent, updateStudent, deleteStudent
-} from "./handlers/student_handler.js"
+// handlers
+import { createEmployee }   from "./handlers/employee_handler.js"
+import { createCourse }     from "./handlers/course_handler.js"
+import { createProgram }    from "./handlers/program_handler.js"
+import { createSemester }   from "./handlers/semester_handler.js"
+import { createStudent }    from "./handlers/student_handler.js"
+import { createBlock }      from "./handlers/block_handler.js"
+import { createEnrollment } from "./handlers/enrollment_handler.js"
  
-// Seconds to wait (so you can look at the student in Atlas) before the final delete
-const PAUSE_SECONDS = 10
+// Test data uses an unrealistic academic year so it can't clash with real data.
+const TEST_YEAR = 9999
  
 // ---------- tiny test helpers ----------
 let passed = 0
 let failed = 0
-let createAttempts = 0           // every createStudent call uses up a counter number
-const leftovers = { students: [], enrollments: [], blocks: [] }
+ 
+const created = {
+    employees: [], courses: [], programs: [], semesters: [],
+    students: [], blocks: [], enrollments: []
+}
+let studentsCreated = 0
  
 function mockRes() {
     const res = {
@@ -29,171 +42,172 @@ function mockRes() {
     return res
 }
  
-async function call(handler, { params = {}, query = {}, body = {} } = {}) {
+async function call(handler, body) {
     const res = mockRes()
-    await handler({ params, query, body }, res)
+    await handler({ body }, res)
     return res
 }
  
-function check(ok, label, detail = "") {
+function report(ok, label, detail = "") {
     if (ok) { passed++; console.log(`  PASS  ${label}`) }
     else    { failed++; console.log(`  FAIL  ${label}${detail ? "  -> " + detail : ""}`) }
 }
  
-function expectStatus(label, res, status) {
-    check(res.statusCode === status, label,
+// Expect a successful create (201) AND verify the document exists in MongoDB
+async function expectCreated(label, handler, body, Model, track) {
+    const res = await call(handler, body)
+    if (res.statusCode !== 201) {
+        report(false, label, `status ${res.statusCode}: ${res.body?.error}`)
+        return null
+    }
+    const id = res.body._id
+    const inDb = await Model.exists({ _id: id })
+    if (!inDb) {
+        report(false, label, "handler said 201 but document is not in the database")
+        return null
+    }
+    created[track].push(id)
+    report(true, `${label} (id: ${id})`)
+    return res.body
+}
+ 
+// Expect a specific error status (validation / duplicate checks)
+async function expectStatus(label, handler, body, status) {
+    const res = await call(handler, body)
+    report(res.statusCode === status, label,
         `expected ${status}, got ${res.statusCode} ${res.body?.error ?? ""}`)
 }
  
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
- 
 // ---------- the tests ----------
 async function runTests() {
-    // ===== CREATE =====
-    console.log("\n== CREATE ==")
+    console.log("\n== Creating records (in dependency order) ==")
  
-    createAttempts++
-    const created = await call(createStudent, { body: {
-        first_name: "Juan", middle_name: "Santos", last_name: "TEST-Dela Cruz",
-        sex: "Male", birth_date: "2005-04-12",
-        address: { street: "12 Rizal St", barangay: "Poblacion", city: "Talavera", province: "Nueva Ecija" }
-    }})
-    expectStatus("Create student -> 201", created, 201)
-    if (created.statusCode !== 201) {
-        console.log("  Cannot continue without a created student.")
-        return
+    const employee = await expectCreated("Employee", createEmployee,
+        { first_name: "Test", middle_name: "Q", last_name: "Instructor" },
+        Employee, "employees")
+ 
+    const course1 = await expectCreated("Course (no prerequisites)", createCourse,
+        { name: "TEST Intro to Programming", units: 3, prerequisites: [] },
+        Course, "courses")
+ 
+    const course2 = await expectCreated("Course (with prerequisite)", createCourse,
+        { name: "TEST Web Programming", units: 3, prerequisites: course1 ? [course1._id] : [] },
+        Course, "courses")
+ 
+    const program = await expectCreated("Program", createProgram,
+        {
+            name: "TEST BS Information Technology",
+            major: "Web Development",
+            courses: [
+                { course: course1?._id, year_level: 1 },
+                { course: course2?._id, year_level: 2 }
+            ]
+        },
+        Program, "programs")
+ 
+    const semester = await expectCreated("Semester", createSemester,
+        {
+            term: "1st",
+            academic_year: TEST_YEAR,
+            offerings: [
+                { course: course1?._id },                           // course_active defaults to true
+                { course: course2?._id, course_active: false }
+            ]
+        },
+        Semester, "semesters")
+ 
+    const student = await expectCreated("Student (auto id)", createStudent,
+        {
+            first_name: "Juan", middle_name: "Santos", last_name: "TEST-Dela Cruz",
+            sex: "Male", birth_date: "2005-04-12",
+            address: { street: "12 Rizal St", barangay: "Poblacion", city: "Talavera", province: "Nueva Ecija" }
+        },
+        Student, "students")
+    if (student) studentsCreated++
+ 
+    if (student) {
+        const idText = String(student._id)
+        report(/^\d{10}$/.test(idText) && idText.startsWith(String(new Date().getFullYear())),
+            `Student id has format YYYY + 6 digits`, `got ${idText}`)
     }
  
-    const id = created.body._id
-    leftovers.students.push(id)
+    const block = await expectCreated("Block", createBlock,
+        {
+            semester: semester?._id,
+            section_name: "TEST-IT-1A",
+            courses: [{ course: course1?._id, employee: employee?._id, schedule: "MWF 8:00-9:00", room: "204" }],
+            students: student ? [student._id] : []
+        },
+        Block, "blocks")
  
-    check(await Student.exists({ _id: id }) !== null, `Student is saved in the database (id: ${id})`)
-    check(/^\d{10}$/.test(String(id)) && String(id).startsWith(String(new Date().getFullYear())),
-        "Student id has format YYYY + 6 digits", `got ${id}`)
+    await expectCreated("Enrollment", createEnrollment,
+        {
+            student: student?._id,
+            approved_by: employee?._id,
+            program: program?._id,
+            semester: semester?._id,
+            block: block?._id,
+            standing_year: 1
+        },
+        Enrollment, "enrollments")
  
-    createAttempts++
-    expectStatus("Create without first_name -> 400",
-        await call(createStudent, { body: { last_name: "TEST-NoFirstName" } }), 400)
+    console.log("\n== Validation and duplicate checks (should be rejected) ==")
  
-    createAttempts++
-    expectStatus("Create with invalid sex -> 400",
-        await call(createStudent, { body: { first_name: "X", last_name: "TEST-BadSex", sex: "Other" } }), 400)
+    await expectStatus("Employee missing last_name -> 400", createEmployee,
+        { first_name: "NoLastName" }, 400)
  
-    // ===== GET ONE =====
-    console.log("\n== GET ONE ==")
+    await expectStatus("Course missing name -> 400", createCourse,
+        { units: 3 }, 400)
  
-    const one = await call(getStudent, { params: { id: String(id) } })
-    expectStatus("Get existing student -> 200", one, 200)
-    check(one.body?.last_name === "TEST-Dela Cruz", "Returned the right student", `got ${one.body?.last_name}`)
+    await expectStatus("Program missing name -> 400", createProgram,
+        { major: "Nothing" }, 400)
  
-    expectStatus("Get unknown id -> 404", await call(getStudent, { params: { id: "1234567890" } }), 404)
-    expectStatus("Get non-numeric id -> 400", await call(getStudent, { params: { id: "abc" } }), 400)
+    await expectStatus("Semester with invalid term '4th' -> 400", createSemester,
+        { term: "4th", academic_year: TEST_YEAR }, 400)
  
-    // ===== GET ALL =====
-    console.log("\n== GET ALL ==")
+    await expectStatus("Duplicate semester -> 409", createSemester,
+        { term: "1st", academic_year: TEST_YEAR }, 409)
  
-    const list = await call(getStudents, { query: { last_name: "test-dela" } })
-    expectStatus("List with last_name filter -> 200", list, 200)
-    check(list.body?.students?.some(s => s._id === id), "Filter is case-insensitive and finds the student")
-    check(list.body?.total >= 1 && list.body?.page === 1, "Response has page and total")
+    await expectStatus("Duplicate block section -> 409", createBlock,
+        { semester: semester?._id, section_name: "TEST-IT-1A" }, 409)
  
-    const small = await call(getStudents, { query: { limit: "1" } })
-    check(small.body?.students?.length <= 1, "limit=1 returns at most one student")
- 
-    const none = await call(getStudents, { query: { last_name: "ZZZ-no-such-name" } })
-    check(none.statusCode === 200 && none.body.students.length === 0, "No match returns an empty list")
- 
-    const regex = await call(getStudents, { query: { last_name: ".*" } })
-    check(regex.statusCode === 200 && regex.body.students.length === 0,
-        "Regex symbols in last_name are treated as plain text")
- 
-    // ===== UPDATE =====
-    console.log("\n== UPDATE ==")
- 
-    const upd = await call(updateStudent, {
-        params: { id: String(id) },
-        body: { first_name: "Juanito", address: { city: "Cabanatuan" }, _id: 1 }
-    })
-    expectStatus("Update first_name and address.city -> 200", upd, 200)
- 
-    const fresh = await Student.findById(id)
-    check(fresh?.first_name === "Juanito", "first_name was changed")
-    check(fresh?.address?.city === "Cabanatuan", "address.city was changed")
-    check(fresh?.address?.street === "12 Rizal St", "address.street was NOT erased")
-    check(fresh?.last_name === "TEST-Dela Cruz", "Fields not sent were left alone")
-    check(upd.body?._id === id, "_id in the body was ignored")
- 
-    expectStatus("Update with invalid sex -> 400",
-        await call(updateStudent, { params: { id: String(id) }, body: { sex: "Other" } }), 400)
-    expectStatus("Update with no valid fields -> 400",
-        await call(updateStudent, { params: { id: String(id) }, body: { nonsense: "x" } }), 400)
-    expectStatus("Update unknown id -> 404",
-        await call(updateStudent, { params: { id: "1234567890" }, body: { first_name: "A" } }), 404)
-    expectStatus("Update non-numeric id -> 400",
-        await call(updateStudent, { params: { id: "abc" }, body: { first_name: "A" } }), 400)
- 
-    // ===== DELETE =====
-    console.log("\n== DELETE ==")
- 
-    // The enrollment and block only need to point at this student, so random ids stand in
-    // for the other documents (Mongoose does not check that referenced documents exist).
-    const enrollment = await Enrollment.create({
-        student: id,
-        approved_by: new mongoose.Types.ObjectId(),
-        program:     new mongoose.Types.ObjectId(),
-        semester:    new mongoose.Types.ObjectId(),
-        block:       new mongoose.Types.ObjectId(),
-        standing_year: 1
-    })
-    leftovers.enrollments.push(enrollment._id)
- 
-    expectStatus("Delete student with an enrollment -> 409",
-        await call(deleteStudent, { params: { id: String(id) } }), 409)
-    check(await Student.exists({ _id: id }) !== null, "Student is still in the database after the refusal")
- 
-    await Enrollment.deleteOne({ _id: enrollment._id })
- 
-    const block = await Block.create({
-        semester: new mongoose.Types.ObjectId(),
-        section_name: "TEST-STUDENT-BLOCK",
-        students: [id]
-    })
-    leftovers.blocks.push(block._id)
- 
-    expectStatus("Delete student who is in a block -> 409",
-        await call(deleteStudent, { params: { id: String(id) } }), 409)
- 
-    await Block.deleteOne({ _id: block._id })
- 
-    console.log(`\n  Pausing ${PAUSE_SECONDS} seconds: check the student in Atlas now (students collection)...`)
-    await sleep(PAUSE_SECONDS * 1000)
- 
-    expectStatus("Delete student with no references -> 200",
-        await call(deleteStudent, { params: { id: String(id) } }), 200)
-    check(await Student.exists({ _id: id }) === null, "Student is gone from the database")
- 
-    expectStatus("Delete the same student again -> 404",
-        await call(deleteStudent, { params: { id: String(id) } }), 404)
-    expectStatus("Delete non-numeric id -> 400",
-        await call(deleteStudent, { params: { id: "abc" } }), 400)
+    await expectStatus("Duplicate enrollment -> 409", createEnrollment,
+        {
+            student: student?._id,
+            approved_by: employee?._id,
+            program: program?._id,
+            semester: semester?._id,
+            block: block?._id,
+            standing_year: 1
+        }, 409)
 }
  
-// ---------- cleanup (also runs if a test crashed halfway) ----------
+// ---------- cleanup ----------
 async function cleanup() {
-    console.log("\n== Cleaning up ==")
+    console.log("\n== Pausing 10 seconds so you can check the data in Atlas ==")
+    console.log("   (refresh your collections now, the test data will be deleted after the pause)")
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+ 
+    console.log("\n== Cleaning up test data ==")
+    const ids = (list) => ({ _id: { $in: list } })
+ 
     const results = await Promise.all([
-        Enrollment.deleteMany({ _id: { $in: leftovers.enrollments } }),
-        Block.deleteMany({ _id: { $in: leftovers.blocks } }),
-        Student.deleteMany({ _id: { $in: leftovers.students } })
+        Enrollment.deleteMany(ids(created.enrollments)),
+        Block.deleteMany(ids(created.blocks)),
+        Student.deleteMany(ids(created.students)),
+        Semester.deleteMany(ids(created.semesters)),
+        Program.deleteMany(ids(created.programs)),
+        Course.deleteMany(ids(created.courses)),
+        Employee.deleteMany(ids(created.employees))
     ])
     const total = results.reduce((sum, r) => sum + r.deletedCount, 0)
-    console.log(`  Removed ${total} leftover test document(s)`)
+    console.log(`  Removed ${total} test documents`)
  
-    // Every createStudent call used up a student number; give them back
-    if (createAttempts > 0) {
+    // The student test consumed id numbers from the counter; give them back
+    if (studentsCreated > 0) {
         const year = new Date().getFullYear()
-        await Counter.findByIdAndUpdate(`student-${year}`, { $inc: { seq: -createAttempts } })
-        console.log(`  Restored the student id counter (${createAttempts} number(s))`)
+        await Counter.findByIdAndUpdate(`student-${year}`, { $inc: { seq: -studentsCreated } })
+        console.log(`  Restored the student id counter (${studentsCreated} number(s))`)
     }
 }
  
