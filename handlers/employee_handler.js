@@ -95,6 +95,7 @@ export async function updateEmployee(req, res) {
     }
 }
 
+//DELETE
 export async function deleteEmployee(req, res) {
     try{
         const id = req.params.id
