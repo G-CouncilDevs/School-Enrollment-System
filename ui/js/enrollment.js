@@ -42,6 +42,7 @@ function getSelectedSemester() {
 function renderBlocks() {
   const semester = getSelectedSemester();
   enrollmentState.selectedSemester = semester || null;
+  enrollmentState.selectedBlock = null;
 
   const options = enrollmentState.blocks
     .filter(
@@ -58,6 +59,14 @@ function renderBlocks() {
   document.querySelectorAll("[data-sections]").forEach((select) => {
     select.innerHTML = `<option value="">Select section</option>${options}`;
   });
+}
+
+// Store the block selected for the current enrollment.
+function selectBlock(event) {
+  enrollmentState.selectedBlock =
+    enrollmentState.blocks.find(
+      (block) => String(block._id) === String(event.target.value),
+    ) || null;
 }
 
 // Show matching students as selectable search results.
@@ -155,6 +164,9 @@ function bindStudentSearch() {
 function bindEnrollmentEvents() {
   document.querySelector("#enroll-term")?.addEventListener("change", renderBlocks);
   document.querySelector("#enroll-year")?.addEventListener("change", renderBlocks);
+  document.querySelectorAll("[data-sections]").forEach((select) => {
+    select.addEventListener("change", selectBlock);
+  });
   bindStudentSearch();
 }
 
