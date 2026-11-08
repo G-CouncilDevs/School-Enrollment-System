@@ -14,3 +14,5 @@ export async function createCourse(req, res) {
         res.status(400).json({error:err.message})
     }
 }
+
+//make a Delete and edit and make a get function for everything
