@@ -83,7 +83,7 @@ export async function updateEmployee(req, res) {
         const updated = await Employee.findByIdAndUpdate(
             id,
             { $set: changes},
-            { returnDocument: "after", runValidators: true}
+            { new: true, runValidators: true}
         )
 
         if (!updated) return res.status(404).json({error: "Employee not found"})

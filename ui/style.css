@@ -17,7 +17,7 @@ body {
 
 button, input, select { font: inherit; }
 
-/* ---------- Top bar ---------- */
+/* ---------- Navbar ---------- */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -173,32 +173,59 @@ td { padding: 14px 8px; border-top: 1px solid var(--line); }
 .students small { color: var(--gray); }
 .badge { padding: 4px 10px; font-size: 12px; font-weight: 600; color: #15803d; background: #dcfce7; border-radius: 999px; }
 
-/* ---------- Popups (No JS here. A link to #add-course shows the popup with that id but you can figure that out) ---------- */
-.modal {
-  display: none;
+/* Prerequisite checklist inside the course popup */
+.checklist { margin: 0; padding: 0; border: 0; min-width: 0; }
+.checklist legend { margin-bottom: 6px; padding: 0; font-size: 14px; font-weight: 500; }
+.checklist-box { display: flex; flex-direction: column; gap: 2px; max-height: 180px; overflow: auto; padding: 6px; border: 1px solid #cbd5e1; border-radius: 8px; }
+.checklist-box label { flex-direction: row; align-items: center; gap: 8px; padding: 6px; font-weight: 400; }
+.checklist-box input { width: 16px; height: 16px; padding: 0; }
+.badge.muted { color: var(--gray); background: #f1f5f9; }
+.chip { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 8px; font-size: 12px; background: #f1f5f9; border-radius: 999px; }
+
+/* ---------- Validation messages ---------- */
+.field-error { min-height: 0; font-size: 13px; font-weight: 500; color: var(--red); }
+.field-error:empty { display: none; }
+.invalid { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12); }
+
+/* ---------- Toast (success / error popup) ---------- */
+.toast {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 10;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(15, 23, 42, 0.5);
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 14px 18px;
+  font-weight: 500;
+  color: #fff;
+  background: #15803d;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.35);
 }
+.toast.error { background: var(--red); }
 
-.modal:target { display: flex; }
+.empty { color: var(--gray); text-align: center; }
+.term-label { margin: -14px 0 20px; }
+.term-label:empty { display: none; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn.small { padding: 7px 12px; font-size: 14px; }
+.link { padding: 0; font: inherit; font-weight: 600; background: none; border: 0; cursor: pointer; }
+.link + .link { margin-left: 12px; }
 
-.modal-box { width: min(440px, 100%); max-height: 100%; overflow: auto; padding: 24px; background: #fff; border-radius: 14px; }
-.modal-box h2 { margin: 0 0 16px; }
+/* ---------- Popups (<dialog>, opened by script.js) ---------- */
+dialog.modal { width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px); padding: 0; border: 0; border-radius: 14px; }
+dialog.modal::backdrop { background: rgba(15, 23, 42, 0.5); }
+.modal-box { padding: 24px; background: #fff; }
+.modal-box h2 { margin: 0 0 16px; font-size: 20px; }
 .modal-box form { display: flex; flex-direction: column; gap: 14px; }
 .modal-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+.modal-box p { margin: 0; }
 
 /* ---------- Small screens ---------- */
 @media (max-width: 900px) {
   .navbar { padding: 0 16px; }
-  .navbar nav a { margin-right: 0; }
+  .navbar nav { display: flex; gap: 4px; }
+  .navbar nav a { margin-right: 0; padding: 8px 10px; white-space: nowrap; }
+  .user-menu [data-user-name] { display: none; }   /* just the initials on phones */
   .metrics { grid-template-columns: 1fr; }
   .panel-head { flex-direction: column; align-items: stretch; }
   .row input, .row select { flex: 1 1 140px; min-width: 0; }

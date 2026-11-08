@@ -100,7 +100,7 @@ export async function updateStudent(req, res) {
         const updated = await Student.findByIdAndUpdate(
             id,
             { $set: changes},
-            { returnDocument: "after", runValidators: true}
+            { new: true, runValidators: true}
         )
 
         if (!updated) return res.status(404).json({error: "Student not found"})
