@@ -9,6 +9,7 @@ import Course from "../models/course_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
 import { claimSeat } from "../helper/seat_helper.js";
+import { nextStudentID } from "../models/studentID_generator.js";
  
 const isId = (value) => mongoose.isValidObjectId(String(value))
 
@@ -27,9 +28,26 @@ export async function createEnrollment(req, res) {
     const session = await mongoose.startSession()
     try{
         const approvedBy = req.session.employeeId
-        const student = Number(req.body.student)
+        const newStudent = req.body.student === undefined
+        let student = newStudent ? null : Number(req.body.student)
+        let studentData
+
+        if (newStudent) {
+            studentData = {
+                _id: await nextStudentID(),
+                first_name: req.body.first_name,
+                middle_name: req.body.middle_name,
+                last_name: req.body.last_name,
+                sex: req.body.sex,
+                birth_date: req.body.birth_date,
+                address: req.body.address,
+            }
+        }
+
         if (!Number.isInteger(student) || student <= 0) {
-            return res.status(400).json({error: "student must be a student id number"})
+            if (!newStudent) {
+                return res.status(400).json({error: "student must be a student id number"})
+            }
         }
         if (!isId(approvedBy)) {
             return res.status(401).json({error: "Authentication required"})
@@ -41,13 +59,13 @@ export async function createEnrollment(req, res) {
         }
  
         const [studentExists, employeeExists, programExists, semester, block] = await Promise.all([
-            Student.exists({ _id: student }),
+            newStudent ? false : Student.exists({ _id: student }),
             Employee.exists({ _id: approvedBy }),
             Program.exists({ _id: req.body.program }),
             Semester.findById(req.body.semester),
             Block.findById(req.body.block)
         ])
-        if (!studentExists)  return res.status(400).json({error: "Student does not exist"})
+        if (!newStudent && !studentExists) return res.status(400).json({error: "Student does not exist"})
         if (!employeeExists) return res.status(400).json({error: "Approving employee does not exist"})
         if (!programExists)  return res.status(400).json({error: "Program does not exist"})
         if (!semester)       return res.status(400).json({error: "Semester does not exist"})
@@ -93,6 +111,11 @@ export async function createEnrollment(req, res) {
         // Create the enrollment and claim a seat for each eligible course, all or nothing
         let result = null
         await session.withTransaction(async () => {
+            if (newStudent) {
+                const [createdStudent] = await Student.create([studentData], { session })
+                student = createdStudent._id
+            }
+
             const [created] = await Enrollment.create([{
                 student,
                 approved_by:   approvedBy,

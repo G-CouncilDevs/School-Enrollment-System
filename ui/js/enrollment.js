@@ -248,7 +248,7 @@ async function submitNewEnrollment(event) {
   }
 
   try {
-    const student = await requestJson("/students", {
+    const response = await requestJson("/enrollments", {
       method: "POST",
       body: JSON.stringify({
         first_name: field("first_name"),
@@ -262,13 +262,6 @@ async function submitNewEnrollment(event) {
           city: field("city"),
           province: field("province"),
         },
-      }),
-    });
-
-    const response = await requestJson("/enrollments", {
-      method: "POST",
-      body: JSON.stringify({
-        student: student._id,
         program,
         semester: enrollmentState.selectedSemester._id,
         block,
@@ -277,7 +270,7 @@ async function submitNewEnrollment(event) {
     });
 
     showToast(
-      `Student ${student._id} created. ${response.enrolled.length} course(s) enrolled.`,
+      `Student ${response.enrollment.student} created. ${response.enrolled.length} course(s) enrolled.`,
     );
     event.currentTarget.reset();
     enrollmentState.selectedBlock = null;
