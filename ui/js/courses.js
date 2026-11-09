@@ -39,10 +39,7 @@ export function renderCourses() {
   const rows = document.querySelector("#course-rows");
   if (!rows) return;
 
-  const programId = document.querySelector("#course-program")?.value || "";
-  const courses = state.courses.filter((course) =>
-    courseMatchesProgram(course, programId),
-  );
+  const courses = state.courses;
 
   rows.innerHTML = courses.length
     ? courses
@@ -137,11 +134,16 @@ export function openCourseDeleteDialog(course) {
 // Load one page of courses from the API and refresh related dashboard elements.
 export async function loadCourses(handleLoadError) {
   const input = document.querySelector("#course-search");
+  const programSelect = document.querySelector("#course-program");
+  const search = input?.value.trim() || "";
+  const programId = programSelect?.value || "";
+
   const params = new URLSearchParams({
     page: String(state.coursePage),
     limit: String(PAGE_SIZE),
   });
-  if (input?.value.trim()) params.set("search", input.value.trim());
+  if (search) params.set("search", search);
+  if (programId) params.set("program", programId);
 
   setLoading("#course-rows", "Loading courses…");
   const response = await requestJson(`/courses?${params}`);
@@ -155,7 +157,10 @@ export async function loadCourses(handleLoadError) {
 
   const total = document.querySelector("#course-total");
   if (total) total.textContent = `${state.courseTotal} active course${state.courseTotal === 1 ? "" : "s"}`;
-  document.querySelector("#metric-courses").textContent = state.courseTotal;
+  if (!programId) {
+    const metric = document.querySelector("#metric-courses");
+    if (metric) metric.textContent = state.courseTotal;
+  }
 }
 
 // Create a course or update the course currently selected for editing.

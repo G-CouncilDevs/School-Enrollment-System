@@ -55,7 +55,10 @@ function bindDashboardEvents(loadData) {
     state.studentPage = 1;
     loadStudents(handleLoadError).catch(handleLoadError);
   });
-  document.querySelector("#course-program")?.addEventListener("change", renderCourses);
+  document.querySelector("#course-program")?.addEventListener("change", () => {
+    state.coursePage = 1;
+    loadCourses(handleLoadError).catch(handleLoadError);
+  });
   document.querySelector("#student-program")?.addEventListener("change", () => {
     state.studentPage = 1;
     loadStudents(handleLoadError).catch(handleLoadError);

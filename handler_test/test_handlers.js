@@ -8,6 +8,7 @@ import Semester   from "../models/semester_model.js"
 import Student    from "../models/student_model.js"
 import Block      from "../models/block_model.js"
 import Enrollment from "../models/enrollment_model.js"
+import CourseEnrollment from "../models/course_enrollment_model.js"
 import Counter    from "../models/studentID_generator.js"
  
 // handlers
@@ -196,6 +197,7 @@ async function cleanup() {
  
     const results = await Promise.all([
         Enrollment.deleteMany(ids(created.enrollments)),
+        CourseEnrollment.deleteMany({ enrollment: { $in: created.enrollments } }),
         Block.deleteMany(ids(created.blocks)),
         Student.deleteMany(ids(created.students)),
         Semester.deleteMany(ids(created.semesters)),

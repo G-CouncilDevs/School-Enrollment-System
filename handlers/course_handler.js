@@ -46,6 +46,14 @@ export async function getCourses(req, res) {
             const safe = String(req.query.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
             filter.name = new RegExp("^" + safe, "i")
         }
+        if (req.query.program) {
+            if (!mongoose.isValidObjectId(req.query.program)) {
+                return res.status(400).json({error: "Invalid program id"})
+            }
+            const prog = await Program.findById(req.query.program).select("courses.course")
+            const courseIds = (prog?.courses || []).map(c => c.course)
+            filter._id = { $in: courseIds }
+        }
 
         const page = Math.max(parseInt(req.query.page) || 1, 1)
         const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)

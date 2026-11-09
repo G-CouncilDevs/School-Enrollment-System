@@ -135,10 +135,17 @@ input[type="checkbox"] { width: 16px; height: 16px; padding: 0; }
 .link { font-weight: 600; text-decoration: none; color: #1d4ed8; }
 
 /* ---------- Table (New Enrollees) ---------- */
-.table-wrap { overflow-x: auto; margin: 16px 0 14px; }
+.table-wrap {
+  overflow: auto;
+  max-height: 480px;
+  margin: 16px 0 14px;
+}
 table { width: 100%; min-width: 700px; border-collapse: collapse; }
 
 th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 10px 8px;
   font-size: 12px;
   text-align: left;
