@@ -454,12 +454,26 @@ function renderEnrollments() {
   const rows = document.querySelector("#enrollment-rows");
   if (!rows) return;
 
-  if (enrollmentState.enrollments.length === 0) {
-    rows.innerHTML = '<tr><td colspan="6" class="empty">No enrollments yet.</td></tr>';
+  const query = document.querySelector("#enrollment-search")?.value.trim().toLowerCase() || "";
+
+  const filtered = query
+    ? enrollmentState.enrollments.filter((enrollment) => {
+        const student = enrollment.student || {};
+        const name = [student.first_name, student.middle_name, student.last_name]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        const studentId = String(student._id || enrollment.student || "").toLowerCase();
+        return name.includes(query) || studentId.includes(query);
+      })
+    : enrollmentState.enrollments;
+
+  if (filtered.length === 0) {
+    rows.innerHTML = `<tr><td colspan="6" class="empty">${query ? "No matching enrollments." : "No enrollments yet."}</td></tr>`;
     return;
   }
 
-  rows.innerHTML = enrollmentState.enrollments
+  rows.innerHTML = filtered
     .map((enrollment) => {
       const student = enrollment.student || {};
       const name = [student.first_name, student.middle_name, student.last_name]
@@ -500,6 +514,11 @@ async function refreshSemesters() {
 // Load enrollments for the currently selected semester.
 async function loadEnrollments() {
   const semester = enrollmentState.selectedSemester;
+
+  // Clear search so the new term's list isn't pre-filtered.
+  const searchInput = document.querySelector("#enrollment-search");
+  if (searchInput) searchInput.value = "";
+
   if (!semester) {
     enrollmentState.enrollments = [];
     renderEnrollments();
@@ -914,6 +933,7 @@ function bindEnrollmentEvents() {
   bindStudentSearch();
   bindEditDialog();
   bindDropDialog();
+  document.querySelector("#enrollment-search")?.addEventListener("input", renderEnrollments);
   bindExtraCourse();
   document.querySelector("#enroll-cancel")?.addEventListener("click", () => {
     document.querySelector("#enroll-form")?.reset();

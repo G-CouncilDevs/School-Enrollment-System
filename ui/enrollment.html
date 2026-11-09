@@ -322,8 +322,13 @@
 
       <!-- This term's enrollments -->
       <section class="panel">
-        <h2>Enrolled This Term <span class="sub" id="table-term"></span></h2>
-        <p class="sub">Students you enroll show up here.</p>
+        <div class="panel-head">
+          <div>
+            <h2>Enrolled This Term <span class="sub" id="table-term"></span></h2>
+            <p class="sub">Students you enroll show up here.</p>
+          </div>
+          <input type="search" id="enrollment-search" placeholder="Search by name or ID…" aria-label="Search enrolled students" style="max-width:280px">
+        </div>
 
         <div class="table-wrap">
           <table>
