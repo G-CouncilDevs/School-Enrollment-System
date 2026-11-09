@@ -56,7 +56,7 @@ export async function createCourseRecord(req, res) {
 // GET /course-records
 // Optional query string (all exact matches):
 //   ?student=2026000001  ?course=<id>  ?semester=<id>  ?status=passed
-//   ?page=1&limit=20
+//   ?page=1&limit=10
 export async function getCourseRecords(req, res) {
     try{
         const filter = {}
@@ -86,7 +86,7 @@ export async function getCourseRecords(req, res) {
         }
  
         const page  = Math.max(parseInt(req.query.page)  || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
  
         const [records, total] = await Promise.all([
             CourseRecord.find(filter)

@@ -48,7 +48,7 @@ export async function getCourses(req, res) {
         }
 
         const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
 
         const [courses, total] = await Promise.all([
             Course.find(filter)

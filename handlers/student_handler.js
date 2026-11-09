@@ -104,7 +104,7 @@ export async function getStudents(req, res) {
         const filter = andClauses.length > 0 ? { $and: andClauses } : {}
         //Amount of things that get displayed, pagination
         const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
         //The display
         const [students, total] = await Promise.all([
             Student.find(filter)

@@ -57,7 +57,7 @@ export async function getBlocks(req, res) {
         }
 
         const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
 
         const [blocks, total] = await Promise.all([
             Block.find(filter)

@@ -539,7 +539,7 @@ async function searchStudents(event) {
   }
 
   const response = await requestJson(
-    `/students?search=${encodeURIComponent(search)}&page=1&limit=20`,
+    `/students?search=${encodeURIComponent(search)}&page=1&limit=10`,
   );
   enrollmentState.students = response.students || [];
   renderStudentResults(enrollmentState.students);
