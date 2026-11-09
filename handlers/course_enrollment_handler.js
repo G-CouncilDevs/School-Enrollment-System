@@ -6,13 +6,14 @@ import Block from "../models/block_model.js";
 import Course from "../models/course_model.js";
 import CourseRecord from "../models/course_record_model.js";
 import { claimSeat } from "../helper/seat_helper.js";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
 // Imported so populate() can find the model:
 import "../models/student_model.js";
  
-const isId = (value) => mongoose.isValidObjectId(String(value))
 const SOURCES = ["block", "prerequisite"]
 
-export async function getCourseEnrollments(req, res) {
+export async function getCourseEnrollments(req, res, next) {
     try{
         const filter = {}
  
@@ -40,8 +41,7 @@ export async function getCourseEnrollments(req, res) {
             filter.source = req.query.source
         }
  
-        const page  = Math.max(parseInt(req.query.page)  || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
  
         const [courseEnrollments, total] = await Promise.all([
             CourseEnrollment.find(filter)
@@ -56,13 +56,13 @@ export async function getCourseEnrollments(req, res) {
         res.status(200).json({ page, limit, total, courseEnrollments })
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
  
 // ---------- GET ONE (read-only) ----------
 // GET /course-enrollments/:id
-export async function getCourseEnrollment(req, res) {
+export async function getCourseEnrollment(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid course enrollment id"})
@@ -77,7 +77,7 @@ export async function getCourseEnrollment(req, res) {
         res.status(200).json(record)
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
  
@@ -87,7 +87,7 @@ export async function getCourseEnrollment(req, res) {
 // is source "block"; one taken through any other block (for example a missing
 // prerequisite) is source "prerequisite".
 // This is the only way to create a CourseEnrollment directly.
-export async function addCourse(req, res) {
+export async function addCourse(req, res, next) {
     const session = await mongoose.startSession()
     try{
         const { enrollment: enrollmentId, course: courseId, block: blockId } = req.body
@@ -164,7 +164,7 @@ export async function addCourse(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({error: "The student is already taking this course this semester"})
         }
-        res.status(400).json({error:err.message})
+        next(err)
     }
     finally{
         await session.endSession()
@@ -175,7 +175,7 @@ export async function addCourse(req, res) {
 // ---------- DROP A COURSE ----------
 // DELETE /course-enrollments/:id
 // Removes one course from an enrollment and gives the seat back to the semester.
-export async function dropCourse(req, res) {
+export async function dropCourse(req, res, next) {
     const session = await mongoose.startSession()
     try{
         const id = req.params.id
@@ -197,7 +197,7 @@ export async function dropCourse(req, res) {
         res.status(200).json({message: "Course dropped, seat released", _id: id})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
     finally{
         await session.endSession()

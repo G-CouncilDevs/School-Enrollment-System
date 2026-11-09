@@ -1,9 +1,10 @@
-import mongoose from "mongoose";
 import Program from "../models/program_model.js";
 import Enrollment from "../models/enrollment_model.js";
-import Course from "../models/course_model.js"
+import Course from "../models/course_model.js";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
 
-export async function createProgram(req, res) {
+export async function createProgram(req, res, next) {
     try{
         const newProgram = new Program({
             name:   req.body.name,
@@ -14,12 +15,12 @@ export async function createProgram(req, res) {
         res.status(201).json(saved)
     }
     catch(err){
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //GET
-export async function getPrograms(req, res) {
+export async function getPrograms(req, res, next) {
     try{
         const filter = {}
         if (req.query.name){
@@ -27,8 +28,7 @@ export async function getPrograms(req, res) {
             filter.name = new RegExp("^" + safe, "i")
         }
 
-        const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
 
         const [programs, total] = await Promise.all([
             Program.find(filter)
@@ -41,15 +41,15 @@ export async function getPrograms(req, res) {
         res.status(200).json({page, limit, total, programs})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //GET id
-export async function getProgram(req, res) {
+export async function getProgram(req, res, next) {
     try{
         const id = req.params.id
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid program id"})
         }
 
@@ -60,15 +60,15 @@ export async function getProgram(req, res) {
         res.status(200).json(program)
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //PUT
-export async function updateProgram(req, res) {
+export async function updateProgram(req, res, next) {
     try{
         const id = req.params.id
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid program id"})
         }
 
@@ -87,7 +87,7 @@ export async function updateProgram(req, res) {
             }
 
             const ids = req.body.courses.map(entry => String(entry?.course))
-            if (ids.some(courseId => !mongoose.isValidObjectId(courseId))) {
+            if (ids.some(courseId => !isId(courseId))) {
                 return res.status(400).json({error: "Each course entry needs a valid course id"})
             }
             if (new Set(ids).size !== ids.length) {
@@ -113,15 +113,15 @@ export async function updateProgram(req, res) {
         res.status(200).json(saved)
     }
     catch(err){
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //DELETE
-export async function deleteProgram(req, res) {
+export async function deleteProgram(req, res, next) {
     try{
         const id = req.params.id
-        if (!mongoose.isValidObjectId(id)){
+        if (!isId(id)){
             return res.status(400).json({error: "Invalid Program id"})
         }
 
@@ -136,6 +136,6 @@ export async function deleteProgram(req, res) {
         res.status(200).json({message: "Program deleted", _id: id})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }

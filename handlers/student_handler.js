@@ -1,10 +1,11 @@
-import mongoose from "mongoose";
 import Student from "../models/student_model.js";
 import Enrollment from "../models/enrollment_model.js"
 import Block from "../models/block_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
 import { nextStudentID } from "../models/studentID_generator.js";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
 
 // Since MonggoDB passes the special ID to a String, this parses it into a Number
 function parseID(raw){
@@ -13,7 +14,7 @@ function parseID(raw){
 }
 
 //POST
-export async function createStudent(req, res) {
+export async function createStudent(req, res, next) {
     try{
         const newStudent = new Student({
             _id:        await nextStudentID(),
@@ -28,12 +29,12 @@ export async function createStudent(req, res) {
         res.status(201).json(saved)
     }
     catch (err){
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //GET
-export async function getStudents(req, res) {
+export async function getStudents(req, res, next) {
     try{
         const andClauses = []
 
@@ -46,14 +47,14 @@ export async function getStudents(req, res) {
 
         const enrollmentFilter = {}
         if (req.query.program) {
-            if (!mongoose.isValidObjectId(req.query.program)) {
+            if (!isId(req.query.program)) {
                 return res.status(400).json({error: "Invalid program id"})
             }
             enrollmentFilter.program = req.query.program
         }
 
         if (req.query.semester && !req.query.course) {
-            if (!mongoose.isValidObjectId(req.query.semester)) {
+            if (!isId(req.query.semester)) {
                 return res.status(400).json({error: "Invalid semester id"})
             }
             enrollmentFilter.semester = req.query.semester
@@ -65,12 +66,12 @@ export async function getStudents(req, res) {
         }
 
         if (req.query.course) {
-            if (!mongoose.isValidObjectId(req.query.course)) {
+            if (!isId(req.query.course)) {
                 return res.status(400).json({error: "Invalid course id"})
             }
             const query = { course: req.query.course }
             if (req.query.semester) {
-                if (!mongoose.isValidObjectId(req.query.semester)) {
+                if (!isId(req.query.semester)) {
                     return res.status(400).json({error: "Invalid semester id"})
                 }
                 query.semester = req.query.semester
@@ -117,10 +118,8 @@ export async function getStudents(req, res) {
         }
 
         const filter = andClauses.length > 0 ? { $and: andClauses } : {}
-        //Amount of things that get displayed, pagination
-        const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
-        //The display
+        const { page, limit } = parsePage(req.query)
+
         const [students, total] = await Promise.all([
             Student.find(filter)
                 .sort({last_name: 1, first_name: 1})
@@ -132,12 +131,12 @@ export async function getStudents(req, res) {
         res.status(200).json({page, limit, total, students})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //GET id
-export async function getStudent(req, res) {
+export async function getStudent(req, res, next) {
     try{
         const id = parseID(req.params.id)
 
@@ -149,12 +148,12 @@ export async function getStudent(req, res) {
         res.status(200).json(student)
     }
     catch(err){
-        res.status(500).json({error: err.message})
+        next(err)
     }
 }
 
 //PUT
-export async function updateStudent(req, res) {
+export async function updateStudent(req, res, next) {
     try{
         const id = parseID(req.params.id)
         if (id == null) return res.status(400).json({error: "Student id must be a number"})
@@ -184,12 +183,12 @@ export async function updateStudent(req, res) {
         res.status(200).json(updated)
     }
     catch(err){
-        res.status(400).json({error: err.message})
+        next(err)
     }
 }
 
 //DELETE
-export async function deleteStudent(req, res) {
+export async function deleteStudent(req, res, next) {
     try{
         const id = parseID(req.params.id)
 
@@ -217,7 +216,7 @@ export async function deleteStudent(req, res) {
 
     }
     catch(err){
-        res.status(500).json({error: err.message})
+        next(err)
     }
     
 }

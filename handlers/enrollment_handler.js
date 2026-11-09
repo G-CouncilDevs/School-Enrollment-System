@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
+import { filterEligibleCourses } from "../helper/eligibility_helper.js";
 import Enrollment from "../models/enrollment_model.js";
 import Student from "../models/student_model.js";
 import Employee from "../models/employee_model.js";
@@ -7,12 +10,9 @@ import Semester from "../models/semester_model.js";
 import Block from "../models/block_model.js";
 import Course from "../models/course_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
-import CourseRecord from "../models/course_record_model.js";
 import { claimSeat } from "../helper/seat_helper.js";
 import { nextStudentID } from "../models/studentID_generator.js";
 import { getBlockYearLevel } from "../helper/year_helper.js";
- 
-const isId = (value) => mongoose.isValidObjectId(String(value))
 
 
 //POST
@@ -25,7 +25,7 @@ const isId = (value) => mongoose.isValidObjectId(String(value))
 //   missing_prerequisites a prerequisite hasn't been passed
 //   no_seat               the course is full
 // The student can add a missing prerequisite afterwards with POST /course-enrollments.
-export async function createEnrollment(req, res) {
+export async function createEnrollment(req, res, next) {
     const session = await mongoose.startSession()
     try{
         const approvedBy = req.session?.employeeId
@@ -112,36 +112,13 @@ export async function createEnrollment(req, res) {
 
         const courses = await Course.find({ _id: { $in: selectedCourseIds } })
             .populate({ path: "prerequisites", select: "code name" })
-        const passed = new Set(
-            (await CourseRecord.distinct("course", { student, status: "passed" })).map(String)
-        )
         const offerings = new Map(semester.offerings.map(o => [String(o.course), o]))
- 
-        const eligible = []
-        const skipped = []
-        for (const course of courses) {
-            const offering = offerings.get(String(course._id))
-            const info = { course: course._id, code: course.code, name: course.name }
- 
-            if (!offering || !offering.course_active) {
-                skipped.push({ ...info, reason: "not_open" })
-                continue
-            }
-            if (passed.has(String(course._id))) {
-                skipped.push({ ...info, reason: "already_passed" })
-                continue
-            }
-            const missing = course.prerequisites.filter(p => !passed.has(String(p._id)))
-            if (missing.length > 0) {
-                skipped.push({
-                    ...info,
-                    reason: "missing_prerequisites",
-                    missing_prerequisites: missing.map(p => ({ _id: p._id, code: p.code, name: p.name }))
-                })
-                continue
-            }
-            eligible.push({ course, capacity: offering.capacity })
-        }
+
+        const { eligible, skipped } = await filterEligibleCourses(
+            courses,
+            newStudent ? null : student,
+            offerings
+        )
  
         // Create the enrollment and claim a seat for each eligible course, all or nothing
         let result = null
@@ -189,7 +166,7 @@ export async function createEnrollment(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({error: "This student is already enrolled for this semester"})
         }
-        res.status(400).json({error:err.message})
+        next(err)
     }
     finally{
         await session.endSession()
@@ -197,7 +174,7 @@ export async function createEnrollment(req, res) {
 }
 
 //GET
-export async function getEnrollments(req, res) {
+export async function getEnrollments(req, res, next) {
     try{
         const filter = {}
  
@@ -218,8 +195,7 @@ export async function getEnrollments(req, res) {
             }
         }
  
-        const page  = Math.max(parseInt(req.query.page)  || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
  
         const [enrollments, total] = await Promise.all([
             Enrollment.find(filter)
@@ -258,12 +234,12 @@ export async function getEnrollments(req, res) {
         })
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //GET id
-export async function getEnrollment(req, res) {
+export async function getEnrollment(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid enrollment id"})
@@ -284,12 +260,12 @@ export async function getEnrollment(req, res) {
         res.status(200).json({ ...enrollment.toObject(), courses })
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //PUT
-export async function updateEnrollment(req, res) {
+export async function updateEnrollment(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid enrollment id"})
@@ -343,12 +319,12 @@ export async function updateEnrollment(req, res) {
         res.status(200).json(saved)
     }
     catch(err){
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //DELETE
-export async function deleteEnrollment(req, res) {
+export async function deleteEnrollment(req, res, next) {
     const session = await mongoose.startSession()
     try{
         const id = req.params.id
@@ -377,7 +353,10 @@ export async function deleteEnrollment(req, res) {
         res.status(200).json({ message: "Enrollment deleted", _id: id, seats_released: released })
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        if (err.code === 11000) {
+            return res.status(409).json({error: "This student is already enrolled for this semester"})
+        }
+        next(err)
     }
     finally{
         await session.endSession()

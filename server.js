@@ -10,6 +10,7 @@ import semesterRoutes from "./routes/semester_routes.js";
 import blockRoutes from "./routes/block_routes.js";
 import authRoutes from "./routes/auth_routes.js";
 import { requireAuth } from "./middleware/auth_middleware.js";
+import { errorHandler } from "./middleware/error_middleware.js";
 
 const app = express();
 app.use(express.json());
@@ -52,13 +53,13 @@ app.use("/api/programs", programRoutes);
 app.use("/api/semesters", semesterRoutes);
 app.use("/api/blocks", blockRoutes);
 
-app.get("/", (req, res) => {
-  res.send("WAGGGHHHH!!!");
-});
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 3000;
 
 async function start() {
   await connectToMongoDB();
-  app.listen(3000, () => console.log("Server is running on Port 3000"));
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 start().catch((err) => {

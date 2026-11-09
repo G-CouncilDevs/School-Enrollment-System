@@ -55,3 +55,14 @@ export function deleteJson(path) {
 export function postEnrollment(enrollment) {
   return postJson("/enrollments", enrollment);
 }
+
+/**
+ * GET request with optional query params object.
+ * Filters out undefined/null/"" values automatically.
+ * Example: getJson("/students", { search: "ana", page: 2 })
+ */
+export function getJson(path, params = {}) {
+    const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "");
+    const qs = new URLSearchParams(entries).toString();
+    return requestJson(qs ? `${path}?${qs}` : path);
+}

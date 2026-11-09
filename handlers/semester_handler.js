@@ -1,13 +1,14 @@
-import mongoose from "mongoose";
 import Semester from "../models/semester_model.js";
 import Course from "../models/course_model.js";
 import Block from "../models/block_model.js";
 import Enrollment from "../models/enrollment_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
 
 //POST
-export async function createSemester(req, res) {
+export async function createSemester(req, res, next) {
     try{
         const newSemester = new Semester({
             semester_term:   req.body.semester_term,
@@ -19,14 +20,14 @@ export async function createSemester(req, res) {
     }
     catch(err){
         if (err.code === 11000) {
-        return res.status(409).json({error: "That term already exists for this academic year"})
-    }
-        res.status(400).json({error:err.message})
+            return res.status(409).json({error: "That term already exists for this academic year"})
+        }
+        next(err)
     }
 }
 
 //GET
-export async function getSemesters(req, res) {
+export async function getSemesters(req, res, next) {
     try{
         const filter = {}
         if (req.query.academic_year !== undefined) {
@@ -43,8 +44,7 @@ export async function getSemesters(req, res) {
             filter.semester_term = req.query.semester_term
         }
 
-        const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
 
         const [semesters, total] = await Promise.all([
             Semester.find(filter)
@@ -56,15 +56,15 @@ export async function getSemesters(req, res) {
         res.status(200).json({page, limit, total, semesters})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //GET id
- export async function getSemester(req, res) {
+ export async function getSemester(req, res, next) {
     try{
         const id = req.params.id
-        if(!mongoose.isValidObjectId(id)){
+        if(!isId(id)){
             return res.status(400).json({error: "Invalid semester ID"})
         }
 
@@ -80,15 +80,15 @@ export async function getSemesters(req, res) {
         res.status(200).json(data)
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 } 
 
 //PUT
-export async function updateSemester(req, res) {
+export async function updateSemester(req, res, next) {
     try{
         const id = req.params.id
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid semester id"})
         }
 
@@ -106,7 +106,7 @@ export async function updateSemester(req, res) {
             }
 
             const ids = req.body.offerings.map(entry => String(entry?.course))
-            if (ids.some(courseId => !mongoose.isValidObjectId(courseId))) {
+            if (ids.some(courseId => !isId(courseId))) {
                 return res.status(400).json({error: "Each offering needs a valid course id"})
             }
             if (new Set(ids).size !== ids.length) {
@@ -158,15 +158,15 @@ export async function updateSemester(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({error: "That term already exists for this academic year"})
         }
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //DELETE
-export async function deleteSemester(req, res) {
+export async function deleteSemester(req, res, next) {
     try{
         const id = req.params.id
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid semester id"})
         }
 
@@ -194,6 +194,6 @@ export async function deleteSemester(req, res) {
         res.status(200).json({message: "Semester deleted", _id: id})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }

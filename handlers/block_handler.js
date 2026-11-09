@@ -7,11 +7,11 @@ import Student from "../models/student_model.js";
 import Enrollment from "../models/enrollment_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import { getBlockYearLevel } from "../helper/year_helper.js";
-
-const isId = (value) => mongoose.isValidObjectId(String(value))
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
 
 //POST
-export async function createBlock(req, res) {
+export async function createBlock(req, res, next) {
     try{
         const year_level = req.body.year_level !== undefined
             ? Number(req.body.year_level)
@@ -33,12 +33,12 @@ export async function createBlock(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({error: "That section already exists for this semester"})
     }
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //GET
-export async function getBlocks(req, res) {
+export async function getBlocks(req, res, next) {
     try{
         const filter = {}
 
@@ -71,8 +71,7 @@ export async function getBlocks(req, res) {
             filter.section_name = new RegExp("^" + safe, "i")
         }
 
-        const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
 
         const [blocks, total] = await Promise.all([
             Block.find(filter)
@@ -99,12 +98,12 @@ export async function getBlocks(req, res) {
         res.status(200).json({page, limit, total, blocks: blocksWithYear})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //GET id
-export async function getBlock(req, res) {
+export async function getBlock(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid block id"})
@@ -126,12 +125,12 @@ export async function getBlock(req, res) {
         res.status(200).json(data)
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //PUT
-export async function updateBlock(req, res) {
+export async function updateBlock(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid block id"})
@@ -256,13 +255,13 @@ export async function updateBlock(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({error: "That section already exists for this semester"})
         }
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 
 //DELETE
-export async function deleteBlock(req, res) {
+export async function deleteBlock(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid block id"})
@@ -287,6 +286,6 @@ export async function deleteBlock(req, res) {
         res.status(200).json({message: "Block deleted", _id: id})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }

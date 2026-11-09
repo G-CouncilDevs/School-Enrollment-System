@@ -5,9 +5,11 @@ import Semester from "../models/semester_model.js";
 import Block from "../models/block_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
 
 //POST
-export async function createCourse(req, res) {
+export async function createCourse(req, res, next) {
     try{
         const newCourse = new Course({
             name:           req.body.name,
@@ -22,12 +24,12 @@ export async function createCourse(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({error: "That course code already exists"})
     }
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //GET
-export async function getCourses(req, res) {
+export async function getCourses(req, res, next) {
     try{
         const filter = {}
         if (req.query.search) {
@@ -47,7 +49,7 @@ export async function getCourses(req, res) {
             filter.name = new RegExp("^" + safe, "i")
         }
         if (req.query.program) {
-            if (!mongoose.isValidObjectId(req.query.program)) {
+            if (!isId(req.query.program)) {
                 return res.status(400).json({error: "Invalid program id"})
             }
             const prog = await Program.findById(req.query.program).select("courses.course")
@@ -55,8 +57,7 @@ export async function getCourses(req, res) {
             filter._id = { $in: courseIds }
         }
 
-        const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
 
         const [courses, total] = await Promise.all([
             Course.find(filter)
@@ -69,15 +70,15 @@ export async function getCourses(req, res) {
         res.status(200).json({page, limit, total, courses})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //GET id
-export async function getCourse(req, res) {
+export async function getCourse(req, res, next) {
     try{
         const id = String(req.params.id ?? "")
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid course id"})
         }
 
@@ -88,15 +89,15 @@ export async function getCourse(req, res) {
         res.status(200).json(course)
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //PUT
-export async function updateCourse(req, res) {
+export async function updateCourse(req, res, next) {
     try{
         const id = String(req.params.id ?? "")
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid course id"})
         }
 
@@ -130,15 +131,15 @@ export async function updateCourse(req, res) {
         res.status(200).json(saved)
     }
     catch(err){
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //DELETE
-export async function deleteCourse(req, res) {
+export async function deleteCourse(req, res, next) {
     try{
         const id = String(req.params.id ?? "")
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid course id"})
         }
 
@@ -170,7 +171,6 @@ export async function deleteCourse(req, res) {
         res.status(200).json({message: "Course deleted", id})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
-//make a Delete and edit and make a get function for everything

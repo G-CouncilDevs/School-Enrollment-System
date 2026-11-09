@@ -31,7 +31,12 @@ function mockRes() {
  
 async function call(handler, { params = {}, query = {}, body = {} } = {}) {
     const res = mockRes()
-    await handler({ params, query, body }, res)
+    await handler({ params, query, body }, res, (err) => {
+        if (err) {
+            const status = err.status ?? (err.name === "ValidationError" || err.name === "CastError" ? 400 : 500)
+            res.status(status).json({ error: err.message })
+        }
+    })
     return res
 }
  

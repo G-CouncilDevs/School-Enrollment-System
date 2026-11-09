@@ -3,11 +3,12 @@ import CourseRecord from "../models/course_record_model.js";
 import Student from "../models/student_model.js";
 import Course from "../models/course_model.js";
 import Semester from "../models/semester_model.js";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
  
-const isId = (value) => mongoose.isValidObjectId(String(value))
 const STATUSES = ["passed", "failed", "in_progress"]
 
-export async function createCourseRecord(req, res) {
+export async function createCourseRecord(req, res, next) {
     try{
         const student = Number(req.body.student)
         if (!Number.isInteger(student) || student <= 0) {
@@ -48,7 +49,7 @@ export async function createCourseRecord(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({error: "This student already has a record for that course in that semester"})
         }
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
  
@@ -57,7 +58,7 @@ export async function createCourseRecord(req, res) {
 // Optional query string (all exact matches):
 //   ?student=2026000001  ?course=<id>  ?semester=<id>  ?status=passed
 //   ?page=1&limit=10
-export async function getCourseRecords(req, res) {
+export async function getCourseRecords(req, res, next) {
     try{
         const filter = {}
  
@@ -85,8 +86,7 @@ export async function getCourseRecords(req, res) {
             filter.status = req.query.status
         }
  
-        const page  = Math.max(parseInt(req.query.page)  || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
  
         const [records, total] = await Promise.all([
             CourseRecord.find(filter)
@@ -99,13 +99,13 @@ export async function getCourseRecords(req, res) {
         res.status(200).json({ page, limit, total, records })
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
  
 // ---------- GET ONE ----------
 // GET /course-records/:id
-export async function getCourseRecord(req, res) {
+export async function getCourseRecord(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid course record id"})
@@ -119,7 +119,7 @@ export async function getCourseRecord(req, res) {
         res.status(200).json(record)
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
  
@@ -127,7 +127,7 @@ export async function getCourseRecord(req, res) {
 // PUT /course-records/:id
 // Only status and grade can change. A wrong student, course or semester
 // means a different record: delete this one and create a new one.
-export async function updateCourseRecord(req, res) {
+export async function updateCourseRecord(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid course record id"})
@@ -148,7 +148,7 @@ export async function updateCourseRecord(req, res) {
         res.status(200).json(saved)
     }
     catch(err){
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
  
@@ -156,7 +156,7 @@ export async function updateCourseRecord(req, res) {
 // DELETE /course-records/:id
 // Nothing references a course record, so there is no blocking check.
 // Note: deleting a "passed" record does not re-check enrollments that relied on it.
-export async function deleteCourseRecord(req, res) {
+export async function deleteCourseRecord(req, res, next) {
     try{
         const id = req.params.id
         if (!isId(id)) return res.status(400).json({error: "Invalid course record id"})
@@ -167,6 +167,6 @@ export async function deleteCourseRecord(req, res) {
         res.status(200).json({message: "Course record deleted", _id: id})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }

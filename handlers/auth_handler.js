@@ -11,7 +11,7 @@ function employeeResponse(employee) {
   };
 }
 
-export async function loginEmployee(req, res) {
+export async function loginEmployee(req, res, next) {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
@@ -23,24 +23,21 @@ export async function loginEmployee(req, res) {
 
     req.session.regenerate((error) => {
       if (error) {
-        console.error("Failed to regenerate login session:", error);
-        return res.status(500).json({ error: "Unable to sign in" });
+        return next(error);
       }
 
       req.session.employeeId = employee._id.toString();
       res.status(200).json({ employee: employeeResponse(employee) });
     });
   } catch (error) {
-    console.error("Failed to sign in employee:", error);
-    res.status(500).json({ error: "Unable to sign in" });
+    next(error);
   }
 }
 
-export function logoutEmployee(req, res) {
+export function logoutEmployee(req, res, next) {
   req.session.destroy((error) => {
     if (error) {
-      console.error("Failed to destroy login session:", error);
-      return res.status(500).json({ error: "Unable to sign out" });
+      return next(error);
     }
 
     res.clearCookie("connect.sid");
@@ -48,7 +45,7 @@ export function logoutEmployee(req, res) {
   });
 }
 
-export async function getCurrentEmployee(req, res) {
+export async function getCurrentEmployee(req, res, next) {
   try {
     if (!req.session.employeeId) {
       return res.status(401).json({ error: "Authentication required" });
@@ -62,7 +59,6 @@ export async function getCurrentEmployee(req, res) {
 
     res.status(200).json({ employee: employeeResponse(employee) });
   } catch (error) {
-    console.error("Failed to load current employee:", error);
-    res.status(500).json({ error: "Unable to load current employee" });
+    next(error);
   }
 }

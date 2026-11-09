@@ -45,7 +45,12 @@ function mockRes() {
  
 async function call(handler, body, sessionOverrides = {}) {
     const res = mockRes()
-    await handler({ body, session: { employeeId: null, ...sessionOverrides }, params: {}, query: {} }, res)
+    await handler({ body, session: { employeeId: null, ...sessionOverrides }, params: {}, query: {} }, res, (err) => {
+        if (err) {
+            const status = err.status ?? (err.name === "ValidationError" || err.name === "CastError" ? 400 : 500)
+            res.status(status).json({ error: err.message })
+        }
+    })
     return res
 }
  
@@ -58,7 +63,12 @@ function report(ok, label, detail = "") {
 // idKey: dot-path to the id in the response body (default "_id", use "enrollment._id" for enrollments)
 async function expectCreated(label, handler, body, Model, track, session = {}, idKey = "_id") {
     const res = mockRes()
-    await handler({ body, session: { employeeId: null, ...session }, params: {}, query: {} }, res)
+    await handler({ body, session: { employeeId: null, ...session }, params: {}, query: {} }, res, (err) => {
+        if (err) {
+            const status = err.status ?? (err.name === "ValidationError" || err.name === "CastError" ? 400 : 500)
+            res.status(status).json({ error: err.message })
+        }
+    })
     if (res.statusCode !== 201) {
         report(false, label, `status ${res.statusCode}: ${res.body?.error}`)
         return null
@@ -78,7 +88,12 @@ async function expectCreated(label, handler, body, Model, track, session = {}, i
 // Expect a specific error status (validation / duplicate checks)
 async function expectStatus(label, handler, body, status, session = {}) {
     const res = mockRes()
-    await handler({ body, session: { employeeId: null, ...session }, params: {}, query: {} }, res)
+    await handler({ body, session: { employeeId: null, ...session }, params: {}, query: {} }, res, (err) => {
+        if (err) {
+            const status = err.status ?? (err.name === "ValidationError" || err.name === "CastError" ? 400 : 500)
+            res.status(status).json({ error: err.message })
+        }
+    })
     report(res.statusCode === status, label,
         `expected ${status}, got ${res.statusCode} ${res.body?.error ?? ""}`)
 }

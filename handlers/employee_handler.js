@@ -1,10 +1,11 @@
 import Employee from "../models/employee_model.js";
 import Enrollment from "../models/enrollment_model.js";
 import Block from "../models/block_model.js";
-import mongoose from "mongoose";
 import { hashPassword } from "../utils/password.js";
+import { isId } from "../utils/validate.js";
+import { parsePage } from "../utils/pagination.js";
 
-export async function createEmployee(req, res) {
+export async function createEmployee(req, res, next) {
     try{
         const { first_name, middle_name, last_name, email, password } = req.body
 
@@ -30,12 +31,12 @@ export async function createEmployee(req, res) {
         if (err.code === 11000) {
             return res.status(409).json({ error: "An employee with that email already exists" })
         }
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //GET
-export async function getEmployees(req, res) {
+export async function getEmployees(req, res, next) {
     try{
         const filter = {}
         if (req.query.last_name){
@@ -43,8 +44,7 @@ export async function getEmployees(req, res) {
             filter.last_name = new RegExp("^" + safe, "i")
         }
 
-        const page = Math.max(parseInt(req.query.page) || 1, 1)
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100)
+        const { page, limit } = parsePage(req.query)
 
         const [employees, total] = await Promise.all([
             Employee.find(filter)
@@ -56,16 +56,16 @@ export async function getEmployees(req, res) {
         res.status(200).json({page, limit, total, employees})
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 
 //GET id
-export async function getEmployee(req, res) {
+export async function getEmployee(req, res, next) {
     try{
         const id = req.params.id
-        if(!mongoose.isValidObjectId(id)){
+        if(!isId(id)){
             return res.status(400).json({error: "Invalid employee ID"})
         }
 
@@ -75,15 +75,15 @@ export async function getEmployee(req, res) {
         res.status(200).json(employee)
     }
     catch(err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
 
 //PUT
-export async function updateEmployee(req, res) {
+export async function updateEmployee(req, res, next) {
     try{
         const id = req.params.id
-        if(!mongoose.isValidObjectId(id)){
+        if(!isId(id)){
             return res.status(400).json({error: "Invalid employee ID"})
         }
 
@@ -106,15 +106,15 @@ export async function updateEmployee(req, res) {
         res.status(200).json(updated)
     }
     catch(err){
-        res.status(400).json({error:err.message})
+        next(err)
     }
 }
 
 //DELETE
-export async function deleteEmployee(req, res) {
+export async function deleteEmployee(req, res, next) {
     try{
         const id = req.params.id
-        if (!mongoose.isValidObjectId(id)) {
+        if (!isId(id)) {
             return res.status(400).json({error: "Invalid employee id"})
         }
 
@@ -132,6 +132,6 @@ export async function deleteEmployee(req, res) {
         res.status(200).json({message: "Employee deleted", _id: id})
     }
     catch (err){
-        res.status(500).json({error:err.message})
+        next(err)
     }
 }
