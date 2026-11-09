@@ -54,10 +54,15 @@ export function renderCourses() {
               <td>${course.prerequisites?.length
                 ? course.prerequisites
                     .map((prerequisite) => {
-                      const code = prerequisite?.code;
-                      const name = prerequisite?.name;
-                      if (code && name) return escapeHtml(`${code} · ${name}`);
-                      return escapeHtml(code || name || prerequisite);
+                      const code =
+                        prerequisite?.code ||
+                        state.courses.find(
+                          (c) =>
+                            String(c._id) ===
+                            String(prerequisite?._id || prerequisite),
+                        )?.code ||
+                        prerequisite;
+                      return escapeHtml(code);
                     })
                     .join(", ")
                 : "None"}</td>
