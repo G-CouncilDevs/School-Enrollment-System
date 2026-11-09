@@ -1,247 +1,400 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enrollment · Student Enrollment System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="enrollment.css">
-  <script type="module" src="script.js"></script>
-</head>
-<body data-page="enrollment">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enrollment · Student Enrollment System</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="enrollment.css" />
+    <script type="module" src="script.js"></script>
+  </head>
+  <body data-page="enrollment">
+    <!-- Navbar -->
+    <header class="navbar">
+      <nav>
+        <a href="index.html">Dashboard</a>
+        <a href="enrollment.html" class="active">Enrollments</a>
+      </nav>
 
-  <!-- Navbar -->
-  <header class="navbar">
-    <nav>
-      <a href="index.html">Dashboard</a>
-      <a href="enrollment.html" class="active">Enrollments</a>
-    </nav>
-
-    <details class="user-menu">
-      <summary><span class="avatar" data-user-initials>AD</span> <span data-user-name>Admin</span> ▾</summary>
-      <div class="user-menu-list">
-        <a href="login.html" data-logout>Log out</a>
-      </div>
-    </details>
-  </header>
-
-  <main>
-    <h1>Enrollment</h1>
-
-    <section class="panel">
-      <!-- These radio buttons are hidden. They switch with the labels -->
-      <input type="radio" name="mode" id="mode-new" class="mode" value="new" checked>
-      <input type="radio" name="mode" id="mode-existing" class="mode" value="existing">
-
-      <div class="panel-head">
-        <h2 id="enroll-title">Enroll a Student</h2>
-        <div class="tabs">
-          <label for="mode-new">New enrollee</label>
-          <label for="mode-existing">Existing student</label>
+      <details class="user-menu">
+        <summary>
+          <span class="avatar" data-user-initials>AD</span>
+          <span data-user-name>Admin</span> ▾
+        </summary>
+        <div class="user-menu-list">
+          <a href="login.html" data-logout>Log out</a>
         </div>
-      </div>
+      </details>
+    </header>
 
-      <form id="enroll-form" novalidate>
+    <main>
+      <section class="panel">
+        <!-- These radio buttons are hidden. They switch with the labels -->
+        <input
+          type="radio"
+          name="mode"
+          id="mode-new"
+          class="mode"
+          value="new"
+          checked
+        />
+        <input
+          type="radio"
+          name="mode"
+          id="mode-existing"
+          class="mode"
+          value="existing"
+        />
 
-        <h3 class="first">Term</h3>
-        <div class="grid">
-          <label>Term
-            <select id="enroll-term">
-              <option value="1st">1st term</option>
-              <option value="2nd">2nd term</option>
-              <option value="3rd">3rd term</option>
-            </select>
-            <span class="field-error" data-error-for="term"></span>
-          </label>
-          <label>Academic year
-            <select id="enroll-year"></select>
-          </label>
+        <div class="panel-head">
+          <h1 id="enroll-title">Enroll a Student</h2>
+          <div class="tabs">
+            <label for="mode-new">New enrollee</label>
+            <label for="mode-existing">Existing student</label>
+          </div>
         </div>
-        <p class="sub" id="term-note"></p>
 
-        <!-- ==================== NEW ENROLLEE ==================== -->
-        <div class="only-new" id="new-part">
-          <h3>Student details</h3>
+        <form id="enroll-form" novalidate>
+          <h3 class="first">Semester Term</h3>
           <div class="grid">
-            <label>Student ID
-              <input type="text" placeholder="Assigned automatically" disabled>
-            </label>
-            <label>First name <input type="text" name="first_name" required maxlength="60">
-              <span class="field-error" data-error-for="first_name"></span></label>
-            <label>Middle name (optional) <input type="text" name="middle_name" placeholder="e.g. Santos" maxlength="60"></label>
-            <label>Last name <input type="text" name="last_name" required maxlength="60">
-              <span class="field-error" data-error-for="last_name"></span></label>
-            <label>Sex
-              <select name="sex" required>
-                <option value="">Select sex</option>
-                <option>Male</option>
-                <option>Female</option>
+            <label
+              >Term
+              <select id="enroll-term">
+                <option value="1st">1st term</option>
+                <option value="2nd">2nd term</option>
+                <option value="3rd">3rd term</option>
               </select>
-              <span class="field-error" data-error-for="sex"></span>
+              <span class="field-error" data-error-for="term"></span>
             </label>
-            <label>Birthdate <input type="date" name="birth_date" required>
-              <span class="field-error" data-error-for="birth_date"></span></label>
-            <div class="address-row span-all">
-            <label>Street <input type="text" name="street" placeholder="e.g. 12 Rizal St" maxlength="100"></label>
-            <label>Barangay <input type="text" name="barangay" maxlength="60"></label>
-            <label>City / Municipality <input type="text" name="city" maxlength="60"></label>
-            <label>Province <input type="text" name="province" maxlength="60"></label>
-          </div>
-            <label>Program
-              <select name="program" required data-programs>
-                <option value="">Select program</option>
-              </select>
-              <span class="field-error" data-error-for="program"></span>
-            </label>
-            <label>Major
-              <select name="major" required data-majors>
-                <option value="">Select a program first</option>
-              </select>
-              <span class="field-error" data-error-for="major"></span>
+            <label
+              >Academic year
+              <select id="enroll-year"></select>
             </label>
           </div>
+          <p class="sub" id="term-note"></p>
 
-          <h3>Section &amp; courses</h3>
-          <label>Section
-            <select name="block" required data-sections>
-              <option value="">Select section</option>
-            </select>
-            <span class="field-error" data-error-for="block"></span>
-          </label>
-          <p class="sub">Pick a section to see its required courses.</p>
-
-          <div class="courses"></div>
-        </div>
-
-        <!-- ==================== EXISTING STUDENT ==================== -->
-        <div class="only-existing" id="existing-part">
-          <div class="find">
-            <label>Search by name or Student ID
-              <input type="search" id="student-find" placeholder="e.g. Maria or 2026000123" autocomplete="off">
-            </label>
-            <ul class="results" id="find-results" hidden></ul>
-          </div>
-
-          <div class="details-head">
+          <!-- ==================== NEW ENROLLEE ==================== -->
+          <div class="only-new" id="new-part">
             <h3>Student details</h3>
-          </div>
-          <div class="grid">
-            <label>Student ID <input type="text" name="student_id" disabled></label>
-            <label>First name <input type="text" name="first_name" disabled required maxlength="60">
-              <span class="field-error" data-error-for="first_name"></span></label>
-            <label>Middle name (optional) <input type="text" name="middle_name" disabled maxlength="60"></label>
-            <label>Last name <input type="text" name="last_name" disabled required maxlength="60">
-              <span class="field-error" data-error-for="last_name"></span></label>
-            <label>Sex
-              <select name="sex" disabled>
-                <option value="">Select sex</option>
-                <option>Male</option>
-                <option>Female</option>
-              </select>
-            </label>
-            <label>Birthdate <input type="date" name="birth_date" disabled></label>
-            <div class="address-row span-all">
-            <label>Street <input type="text" name="street" placeholder="e.g. 12 Rizal St" maxlength="100" disabled></label>
-            <label>Barangay <input type="text" name="barangay" maxlength="60" disabled></label>
-            <label>City / Municipality <input type="text" name="city" maxlength="60" disabled></label>
-            <label>Province <input type="text" name="province" maxlength="60" disabled></label>
-          </div>
-            <label>Year level
-              <select name="standing_year" required>
-                <option value="">Select year level</option>
-                <option value="1">1st year</option>
-                <option value="2">2nd year</option>
-                <option value="3">3rd year</option>
-                <option value="4">4th year</option>
-              </select>
-              <span class="field-error" data-error-for="standing_year"></span>
-            </label>
-            <label>Program
-              <select name="program" required data-programs>
-                <option value="">Select program</option>
-              </select>
-              <span class="field-error" data-error-for="program"></span>
-            </label>
-            <label>Major
-              <select name="major" required data-majors>
-                <option value="">Select a program first</option>
-              </select>
-              <span class="field-error" data-error-for="major"></span>
-            </label>
-          </div>
-          <span class="field-error" data-error-for="student"></span>
+            <div class="grid">
+              <label
+                >Student ID
+                <input
+                  type="text"
+                  placeholder="Assigned automatically"
+                  disabled
+                />
+              </label>
+              <label
+                >First name
+                <input type="text" name="first_name" required maxlength="60" />
+                <span class="field-error" data-error-for="first_name"></span
+              ></label>
+              <label
+                >Middle name (optional)
+                <input
+                  type="text"
+                  name="middle_name"
+                  placeholder="e.g. Santos"
+                  maxlength="60"
+              /></label>
+              <label
+                >Last name
+                <input type="text" name="last_name" required maxlength="60" />
+                <span class="field-error" data-error-for="last_name"></span
+              ></label>
+              <label
+                >Sex
+                <select name="sex" required>
+                  <option value="">Select sex</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                </select>
+                <span class="field-error" data-error-for="sex"></span>
+              </label>
+              <label
+                >Birthdate <input type="date" name="birth_date" required />
+                <span class="field-error" data-error-for="birth_date"></span
+              ></label>
+              <div class="address-row span-all">
+                <label
+                  >Street
+                  <input
+                    type="text"
+                    name="street"
+                    placeholder="e.g. 12 Rizal St"
+                    maxlength="100"
+                /></label>
+                <label
+                  >Barangay <input type="text" name="barangay" maxlength="60"
+                /></label>
+                <label
+                  >City / Municipality
+                  <input type="text" name="city" maxlength="60"
+                /></label>
+                <label
+                  >Province <input type="text" name="province" maxlength="60"
+                /></label>
+              </div>
+              <label
+                >Program
+                <select name="program" required data-programs>
+                  <option value="">Select program</option>
+                </select>
+                <span class="field-error" data-error-for="program"></span>
+              </label>
+              <label
+                >Major
+                <select name="major" required data-majors>
+                  <option value="">Select a program first</option>
+                </select>
+                <span class="field-error" data-error-for="major"></span>
+              </label>
+            </div>
 
-          <h3>Section &amp; courses</h3>
-          <label>Section
-            <select name="block" required data-sections>
-              <option value="">Select section</option>
+            <h3>Section &amp; courses</h3>
+            <label
+              >Section
+              <select name="block" required data-sections>
+                <option value="">Select section</option>
+              </select>
+              <span class="field-error" data-error-for="block"></span>
+            </label>
+            <p class="sub">Pick a section to see its required courses.</p>
+
+            <div class="courses"></div>
+          </div>
+
+          <!-- ==================== EXISTING STUDENT ==================== -->
+          <div class="only-existing" id="existing-part">
+            <div class="find">
+              <label
+                >Search by name or Student ID
+                <input
+                  type="search"
+                  id="student-find"
+                  placeholder="e.g. Maria or 2026000123"
+                  autocomplete="off"
+                />
+              </label>
+              <ul class="results" id="find-results" hidden></ul>
+            </div>
+
+            <div class="details-head">
+              <h3>Student details</h3>
+            </div>
+            <div class="grid">
+              <label
+                >Student ID <input type="text" name="student_id" disabled
+              /></label>
+              <label
+                >First name
+                <input
+                  type="text"
+                  name="first_name"
+                  disabled
+                  required
+                  maxlength="60" />
+                <span class="field-error" data-error-for="first_name"></span
+              ></label>
+              <label
+                >Middle name (optional)
+                <input type="text" name="middle_name" disabled maxlength="60"
+              /></label>
+              <label
+                >Last name
+                <input
+                  type="text"
+                  name="last_name"
+                  disabled
+                  required
+                  maxlength="60" />
+                <span class="field-error" data-error-for="last_name"></span
+              ></label>
+              <label
+                >Sex
+                <select name="sex" disabled>
+                  <option value="">Select sex</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                </select>
+              </label>
+              <label
+                >Birthdate <input type="date" name="birth_date" disabled
+              /></label>
+              <div class="address-row span-all">
+                <label
+                  >Street
+                  <input
+                    type="text"
+                    name="street"
+                    placeholder="e.g. 12 Rizal St"
+                    maxlength="100"
+                    disabled
+                /></label>
+                <label
+                  >Barangay
+                  <input type="text" name="barangay" maxlength="60" disabled
+                /></label>
+                <label
+                  >City / Municipality
+                  <input type="text" name="city" maxlength="60" disabled
+                /></label>
+                <label
+                  >Province
+                  <input type="text" name="province" maxlength="60" disabled
+                /></label>
+              </div>
+              <label
+                >Year level
+                <select name="standing_year" required>
+                  <option value="">Select year level</option>
+                  <option value="1">1st year</option>
+                  <option value="2">2nd year</option>
+                  <option value="3">3rd year</option>
+                  <option value="4">4th year</option>
+                </select>
+                <span class="field-error" data-error-for="standing_year"></span>
+              </label>
+              <label
+                >Program
+                <select name="program" required data-programs>
+                  <option value="">Select program</option>
+                </select>
+                <span class="field-error" data-error-for="program"></span>
+              </label>
+              <label
+                >Major
+                <select name="major" required data-majors>
+                  <option value="">Select a program first</option>
+                </select>
+                <span class="field-error" data-error-for="major"></span>
+              </label>
+            </div>
+            <span class="field-error" data-error-for="student"></span>
+
+            <h3>Section &amp; courses</h3>
+            <label
+              >Section
+              <select name="block" required data-sections>
+                <option value="">Select section</option>
+              </select>
+              <span class="field-error" data-error-for="block"></span>
+            </label>
+            <p class="sub">
+              Pick a section to see its courses. Courses whose prerequisites
+              aren’t done yet are greyed out.
+            </p>
+            <div class="courses"></div>
+          </div>
+
+          <!-- For both: add an extra course for this student only -->
+          <div class="add-row">
+            <label
+              >Add a course for this student
+              <select id="extra-course">
+                <option value="">Select a course…</option>
+              </select>
+            </label>
+            <button type="button" class="btn" id="add-extra">Add course</button>
+          </div>
+          <span class="field-error" data-error-for="courses"></span>
+
+          <div class="form-footer">
+            <span id="form-hint"
+              >New enrollees get a Student ID automatically when you enroll
+              them.</span
+            >
+            <div>
+              <button type="button" class="btn light" id="enroll-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="btn" id="enroll-submit">
+                Enroll Student
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- This term's enrollments -->
+      <section class="panel">
+        <h2>Enrolled This Term <span class="sub" id="table-term"></span></h2>
+        <p class="sub">Students you enroll show up here.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Year</th>
+                <th>Section</th>
+                <th>Courses</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="enrollment-rows">
+              <tr>
+                <td colspan="6" class="empty">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="modal" id="edit-enrollment-dialog">
+      <div class="modal-box">
+        <h2>Edit Enrollment</h2>
+        <form id="edit-enrollment-form">
+          <div class="field">
+            <label for="edit-standing-year">Year Level</label>
+            <select id="edit-standing-year" name="standing_year" required>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
             </select>
-            <span class="field-error" data-error-for="block"></span>
-          </label>
-          <p class="sub">Pick a section to see its courses. Courses whose prerequisites aren’t done yet are greyed out.</p>
-          <div class="courses"></div>
-        </div>
-
-        <!-- For both: add an extra course for this student only -->
-        <div class="add-row">
-          <label>Add a course for this student
-            <select id="extra-course">
-              <option value="">Select a course…</option>
-            </select>
-          </label>
-          <button type="button" class="btn" id="add-extra">Add course</button>
-        </div>
-        <span class="field-error" data-error-for="courses"></span>
-
-        <div class="form-footer">
-          <span id="form-hint">New enrollees get a Student ID automatically when you enroll them.</span>
-          <div>
-            <button type="button" class="btn light" id="enroll-cancel">Cancel</button>
-            <button type="submit" class="btn" id="enroll-submit">Enroll Student</button>
           </div>
-        </div>
-      </form>
-    </section>
-
-    <!-- This term's enrollments -->
-    <section class="panel">
-      <h2>Enrolled This Term <span class="sub" id="table-term"></span></h2>
-      <p class="sub">Students you enroll show up here.</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Student ID</th>
-              <th>Name</th>
-              <th>Year</th>
-              <th>Section</th>
-              <th>Courses</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="enrollment-rows">
-            <tr><td colspan="6" class="empty">Loading…</td></tr>
-          </tbody>
-        </table>
+          <div class="field">
+            <label for="edit-program">Program</label>
+            <select
+              id="edit-program"
+              name="program"
+              data-edit-programs
+              required
+            >
+              <option value="">Select program</option>
+            </select>
+          </div>
+          <div class="modal-buttons">
+            <button type="button" class="btn light" data-close>Cancel</button>
+            <button type="submit" class="btn">Save</button>
+          </div>
+        </form>
       </div>
-    </section>
-  </main>
+    </dialog>
 
-  <dialog class="modal" id="drop-dialog">
-    <div class="modal-box">
-      <h2>Remove enrollment?</h2>
-      <form id="drop-form">
-        <p>This removes <strong id="drop-name">this student</strong> from this term. Their student record stays.</p>
-        <div class="modal-buttons">
-          <button type="button" class="btn light" data-close>Cancel</button>
-          <button type="submit" class="btn danger">Remove</button>
-        </div>
-      </form>
-    </div>
-  </dialog>
+    <dialog class="modal" id="drop-dialog">
+      <div class="modal-box">
+        <h2>Remove enrollment?</h2>
+        <form id="drop-form">
+          <p>
+            This removes <strong id="drop-name">this student</strong> from this
+            term. Their student record stays.
+          </p>
+          <div class="modal-buttons">
+            <button type="button" class="btn light" data-close>Cancel</button>
+            <button type="submit" class="btn danger">Remove</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
 
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-
-</body>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
 </html>

@@ -1,5 +1,5 @@
 import { enrollmentState } from "./enrollment-state.js";
-import { requestJson, deleteJson } from "./api.js";
+import { requestJson, deleteJson, putJson } from "./api.js";
 import { escapeHtml, showToast } from "./ui.js";
 
 // ── Field-level validation helpers ──────────────────────────────────
@@ -475,6 +475,7 @@ function renderEnrollments() {
           <td>${escapeHtml(enrollment.block?.section_name || "—")}</td>
           <td>${escapeHtml(courses || "No courses")}</td>
           <td>
+            <button type="button" class="btn light small" data-enrollment-edit="${escapeHtml(enrollment._id)}">Edit</button>
             <button type="button" class="btn light small danger-text" data-enrollment-drop="${escapeHtml(enrollment._id)}">Remove</button>
           </td>
         </tr>
@@ -732,6 +733,82 @@ async function submitNewEnrollment(event) {
   }
 }
 
+// Wire the enrollment Edit button and edit-enrollment-dialog modal.
+function bindEditDialog() {
+  const dialog = document.querySelector("#edit-enrollment-dialog");
+  const form = document.querySelector("#edit-enrollment-form");
+  if (!dialog || !form) return;
+
+  let pendingId = null;
+
+  // Populate the edit dialog's program dropdown from enrollmentState.programs.
+  function populateEditPrograms(selectedProgramId) {
+    const select = form.querySelector("[data-edit-programs]");
+    if (!select) return;
+    const options = enrollmentState.programs
+      .map(
+        (program) =>
+          `<option value="${escapeHtml(program._id)}"${String(program._id) === String(selectedProgramId) ? " selected" : ""}>${escapeHtml(program.name)} · ${escapeHtml(program.major)}</option>`,
+      )
+      .join("");
+    select.innerHTML = `<option value="">Select program</option>${options}`;
+  }
+
+  // Open dialog pre-filled when an Edit button is clicked in the enrollment table.
+  document.querySelector("#enrollment-rows")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-enrollment-edit]");
+    if (!button) return;
+
+    pendingId = button.dataset.enrollmentEdit;
+    const enrollment = enrollmentState.enrollments.find(
+      (e) => String(e._id) === pendingId,
+    );
+    if (!enrollment) return;
+
+    // Pre-fill year level.
+    const yearSelect = form.querySelector('[name="standing_year"]');
+    if (yearSelect) yearSelect.value = enrollment.standing_year || "1";
+
+    // Pre-fill program dropdown.
+    const programId = enrollment.program?._id || enrollment.program;
+    populateEditPrograms(programId);
+
+    dialog.showModal();
+  });
+
+  // Cancel button.
+  dialog.querySelectorAll("[data-close]").forEach((button) => {
+    button.addEventListener("click", () => dialog.close());
+  });
+
+  // Save changes.
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!pendingId) return;
+
+    const submitButton = form.querySelector('[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+
+    const data = new FormData(form);
+    const body = {
+      standing_year: Number(data.get("standing_year")),
+      program: data.get("program"),
+    };
+
+    try {
+      await putJson(`/enrollments/${pendingId}`, body);
+      dialog.close();
+      showToast("Enrollment updated successfully.");
+      await loadEnrollments();
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+      pendingId = null;
+    }
+  });
+}
+
 // Wire the enrollment Remove button and drop-dialog modal.
 function bindDropDialog() {
   const dialog = document.querySelector("#drop-dialog");
@@ -835,6 +912,7 @@ function bindEnrollmentEvents() {
     });
   });
   bindStudentSearch();
+  bindEditDialog();
   bindDropDialog();
   bindExtraCourse();
   document.querySelector("#enroll-cancel")?.addEventListener("click", () => {
