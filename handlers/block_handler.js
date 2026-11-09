@@ -13,10 +13,12 @@ const isId = (value) => mongoose.isValidObjectId(String(value))
 export async function createBlock(req, res) {
     try{
         const newBlock = new Block({
-            semester:   req.body.semester,
+            semester:       req.body.semester,
+            program:        req.body.program,
+            major:          req.body.major,
             section_name:   req.body.section_name,
-            courses:    req.body.courses,
-            students:   req.body.students
+            courses:        req.body.courses,
+            students:       req.body.students
         })
         const saved = await newBlock.save()
         res.status(201).json(saved)
@@ -40,6 +42,15 @@ export async function getBlocks(req, res) {
             }
             filter.semester = req.query.semester
         }
+        if (req.query.program !== undefined) {
+            if (!isId(req.query.program)) {
+                return res.status(400).json({error: "Invalid program id"})
+            }
+            filter.program = req.query.program
+        }
+        if (req.query.major !== undefined) {
+            filter.major = req.query.major
+        }
         if (req.query.section_name){
             const safe = String(req.query.section_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
             filter.section_name = new RegExp("^" + safe, "i")
@@ -57,6 +68,7 @@ export async function getBlocks(req, res) {
         ])
         const populated = await Block.populate(blocks, [
             { path: "semester", select: "semester_term academic_year" },
+            { path: "program", select: "name major" },
             {
                 path: "courses.course",
                 select: "code name units prerequisites",
@@ -79,6 +91,7 @@ export async function getBlock(req, res) {
  
         const block = await Block.findById(id)
             .populate({ path: "semester",         select: "semester_term academic_year" })
+            .populate({ path: "program",          select: "name major" })
             .populate({
                 path: "courses.course",
                 select: "code name units prerequisites",

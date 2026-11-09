@@ -126,6 +126,8 @@ try {
   // 6. Create Blocks (Sections)
   const block1A = await Block.create({
     semester: semester1._id,
+    program: bscs._id,
+    major: "Software Engineering",
     section_name: "BSCS-1A",
     courses: [
       { course: cs101._id, schedule: "MWF 9:00-10:00", room: "CL-1" },
@@ -138,6 +140,8 @@ try {
 
   const block1B = await Block.create({
     semester: semester1._id,
+    program: bsit._id,
+    major: "Network Administration",
     section_name: "BSIT-1A",
     courses: [
       { course: cs101._id, schedule: "MWF 10:00-11:00", room: "CL-3" },
@@ -146,7 +150,30 @@ try {
     students: [],
   });
 
-  console.log("Created blocks: BSCS-1A, BSIT-1A");
+  const block2A = await Block.create({
+    semester: semester2._id,
+    program: bscs._id,
+    major: "Software Engineering",
+    section_name: "BSCS-2A",
+    courses: [
+      { course: cs102._id, schedule: "MWF 9:00-10:00", room: "CL-1" },
+      { course: eng101._id, schedule: "TTH 10:30-12:00", room: "RM-201" },
+    ],
+    students: [],
+  });
+
+  const block2B = await Block.create({
+    semester: semester2._id,
+    program: bsit._id,
+    major: "Network Administration",
+    section_name: "BSIT-2A",
+    courses: [
+      { course: eng101._id, schedule: "MWF 13:00-14:00", room: "RM-102" },
+    ],
+    students: [],
+  });
+
+  console.log("Created blocks: BSCS-1A, BSIT-1A (1st Term), BSCS-2A, BSIT-2A (2nd Term)");
 
   // 7. Create Students
   const alice = await Student.create({

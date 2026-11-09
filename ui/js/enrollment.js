@@ -147,27 +147,70 @@ function getSelectedSemester() {
   );
 }
 
-// Fill section dropdowns with blocks belonging to the selected semester.
-function renderBlocks() {
+// Fill section dropdowns with blocks belonging to the selected semester, program, and major.
+function renderBlocks(container = null) {
   const semester = getSelectedSemester();
   enrollmentState.selectedSemester = semester || null;
-  enrollmentState.selectedBlock = null;
 
-  const options = enrollmentState.blocks
-    .filter(
-      (block) =>
-        String(block.semester?._id || block.semester) ===
-        String(semester?._id),
-    )
-    .map(
-      (block) =>
-        `<option value="${escapeHtml(block._id)}">${escapeHtml(block.section_name)}</option>`,
-    )
-    .join("");
+  const targets = container
+    ? container.querySelectorAll("[data-sections]")
+    : document.querySelectorAll("[data-sections]");
 
-  document.querySelectorAll("[data-sections]").forEach((select) => {
-    select.innerHTML = `<option value="">Select section</option>${options}`;
+  targets.forEach((select) => {
+    const parent = select.closest("#new-part, #existing-part") || document;
+    const programId = parent.querySelector?.('[name="program"]')?.value;
+    const major = parent.querySelector?.('[name="major"]')?.value;
+
+    const matchingBlocks = enrollmentState.blocks.filter((block) => {
+      const matchesSemester =
+        String(block.semester?._id || block.semester) === String(semester?._id);
+      if (!matchesSemester) return false;
+
+      // Filter by program if program is selected
+      if (programId) {
+        if (block.program) {
+          if (String(block.program?._id || block.program) !== String(programId)) {
+            return false;
+          }
+        } else {
+          // Fallback by program code prefix if block.program was unset
+          const prog = enrollmentState.programs.find(
+            (p) => String(p._id) === String(programId),
+          );
+          if (prog?.name?.includes("Computer Science") && !block.section_name.startsWith("BSCS")) {
+            return false;
+          }
+          if (prog?.name?.includes("Information Technology") && !block.section_name.startsWith("BSIT")) {
+            return false;
+          }
+        }
+      }
+
+      // Filter by major if major is selected and block specifies a major
+      if (major && block.major) {
+        if (block.major.toLowerCase() !== major.toLowerCase()) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    let placeholder = "Select section";
+    if (!semester) placeholder = "Select term first";
+    else if (!programId) placeholder = "Select program first";
+    else if (matchingBlocks.length === 0) placeholder = "No sections available";
+
+    const options = matchingBlocks
+      .map(
+        (block) =>
+          `<option value="${escapeHtml(block._id)}">${escapeHtml(block.section_name)}</option>`,
+      )
+      .join("");
+
+    select.innerHTML = `<option value="">${placeholder}</option>${options}`;
   });
+
   renderBlockCourses();
 }
 
@@ -367,6 +410,8 @@ async function fillSelectedStudent(student) {
   } catch {
     // Non-fatal if student has no prior enrollments
   }
+
+  renderBlocks(existingPart);
 
   const results = document.querySelector("#find-results");
   if (results) results.hidden = true;
@@ -569,6 +614,13 @@ function bindEnrollmentEvents() {
       const container = event.target.closest("#new-part, #existing-part, #student-dialog");
       const majorSelect = container?.querySelector("[data-majors]");
       renderProgramMajor(event.target.value, majorSelect);
+      renderBlocks(container);
+    });
+  });
+  document.querySelectorAll("[data-majors]").forEach((select) => {
+    select.addEventListener("change", (event) => {
+      const container = event.target.closest("#new-part, #existing-part, #student-dialog");
+      renderBlocks(container);
     });
   });
   bindStudentSearch();
