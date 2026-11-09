@@ -57,6 +57,13 @@ export async function createEnrollment(req, res) {
                 return res.status(400).json({error: `Invalid ${field} id`})
             }
         }
+        if (!Array.isArray(req.body.courses) || req.body.courses.length === 0) {
+            return res.status(400).json({error: "Select at least one course"})
+        }
+        const selectedCourseIds = [...new Set(req.body.courses.map(String))]
+        if (selectedCourseIds.some((courseId) => !isId(courseId))) {
+            return res.status(400).json({error: "Invalid course id"})
+        }
  
         const [studentExists, employeeExists, programExists, semester, block] = await Promise.all([
             newStudent ? false : Student.exists({ _id: student }),
@@ -75,7 +82,12 @@ export async function createEnrollment(req, res) {
         }
  
         // Work out which of the block's courses the student can take
-        const courses = await Course.find({ _id: { $in: block.courses.map(c => c.course) } })
+        const blockCourseIds = new Set(block.courses.map(({ course }) => String(course)))
+        if (selectedCourseIds.some((courseId) => !blockCourseIds.has(courseId))) {
+            return res.status(400).json({error: "Selected course is not in this block"})
+        }
+
+        const courses = await Course.find({ _id: { $in: selectedCourseIds } })
             .populate({ path: "prerequisites", select: "code name" })
         const passed = new Set(
             (await CourseRecord.distinct("course", { student, status: "passed" })).map(String)

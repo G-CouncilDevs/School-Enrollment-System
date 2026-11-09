@@ -123,55 +123,61 @@ function renderStudentResults(students) {
       .join("");
   }
 
-  // Render enrollments for the selected semester.
-  function renderEnrollments() {
-    const rows = document.querySelector("#enrollment-rows");
-    if (!rows) return;
-
-    if (enrollmentState.enrollments.length === 0) {
-      rows.innerHTML = '<tr><td colspan="6" class="empty">No enrollments yet.</td></tr>';
-      return;
-    }
-
-    rows.innerHTML = enrollmentState.enrollments
-      .map((enrollment) => {
-        const student = enrollment.student || {};
-        const name = [student.first_name, student.middle_name, student.last_name]
-          .filter(Boolean)
-          .join(" ");
-        const courses = enrollment.courses?.map((course) => course.code).join(", ");
-
-        return `
-          <tr>
-            <td>${escapeHtml(student._id || enrollment.student)}</td>
-            <td>${escapeHtml(name || "Unknown student")}</td>
-            <td>${escapeHtml(enrollment.standing_year || "—")}</td>
-            <td>${escapeHtml(enrollment.block?.section_name || "—")}</td>
-            <td>${escapeHtml(courses || "No courses")}</td>
-            <td><button type="button" class="btn light small" disabled>Edit</button></td>
-          </tr>
-        `;
-      })
-      .join("");
-  }
-
-  // Load enrollments for the currently selected semester.
-  async function loadEnrollments() {
-    const semester = enrollmentState.selectedSemester;
-    if (!semester) {
-      enrollmentState.enrollments = [];
-      renderEnrollments();
-      return;
-    }
-
-    const response = await requestJson(
-      `/enrollments?semester=${encodeURIComponent(semester._id)}&page=1&limit=100`,
-    );
-    enrollmentState.enrollments = response.enrollments || [];
-    renderEnrollments();
-  }
-
   results.hidden = false;
+}
+
+// Render enrollments for the selected semester.
+function renderEnrollments() {
+  const rows = document.querySelector("#enrollment-rows");
+  if (!rows) return;
+
+  if (enrollmentState.enrollments.length === 0) {
+    rows.innerHTML = '<tr><td colspan="6" class="empty">No enrollments yet.</td></tr>';
+    return;
+  }
+
+  rows.innerHTML = enrollmentState.enrollments
+    .map((enrollment) => {
+      const student = enrollment.student || {};
+      const name = [student.first_name, student.middle_name, student.last_name]
+        .filter(Boolean)
+        .join(" ");
+      const courses = enrollment.courses?.map((course) => course.code).join(", ");
+
+      return `
+        <tr>
+          <td>${escapeHtml(student._id || enrollment.student)}</td>
+          <td>${escapeHtml(name || "Unknown student")}</td>
+          <td>${escapeHtml(enrollment.standing_year || "—")}</td>
+          <td>${escapeHtml(enrollment.block?.section_name || "—")}</td>
+          <td>${escapeHtml(courses || "No courses")}</td>
+          <td><button type="button" class="btn light small" disabled>Edit</button></td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+// Read selected courses from one enrollment mode.
+function getSelectedCourseIds(container) {
+  return [...(container?.querySelectorAll('input[name="courses"]:checked') || [])]
+    .map((input) => input.value);
+}
+
+// Load enrollments for the currently selected semester.
+async function loadEnrollments() {
+  const semester = enrollmentState.selectedSemester;
+  if (!semester) {
+    enrollmentState.enrollments = [];
+    renderEnrollments();
+    return;
+  }
+
+  const response = await requestJson(
+    `/enrollments?semester=${encodeURIComponent(semester._id)}&page=1&limit=100`,
+  );
+  enrollmentState.enrollments = response.enrollments || [];
+  renderEnrollments();
 }
 
 // Store selected student and copy its details into the existing-student form.
@@ -250,9 +256,10 @@ async function submitExistingEnrollment(event) {
   const program = existingPart?.querySelector('[name="program"]')?.value;
   const block = existingPart?.querySelector('[name="block"]')?.value;
   const standingYear = existingPart?.querySelector('[name="standing_year"]')?.value;
+  const courses = getSelectedCourseIds(existingPart);
 
-  if (!student || !program || !enrollmentState.selectedSemester || !block) {
-    showToast("Select a student, program, term, academic year, and section.", true);
+  if (!student || !program || !enrollmentState.selectedSemester || !block || courses.length === 0) {
+    showToast("Select a student, program, term, academic year, section, and course.", true);
     return;
   }
 
@@ -264,6 +271,7 @@ async function submitExistingEnrollment(event) {
         program,
         semester: enrollmentState.selectedSemester._id,
         block,
+        courses,
         standing_year: standingYear || undefined,
       }),
     });
@@ -290,9 +298,10 @@ async function submitNewEnrollment(event) {
   const program = field("program");
   const block = field("block");
   const standingYear = field("standing_year");
+  const courses = getSelectedCourseIds(newPart);
 
-  if (!enrollmentState.selectedSemester || !program || !block) {
-    showToast("Select a term, academic year, program, and section.", true);
+  if (!enrollmentState.selectedSemester || !program || !block || courses.length === 0) {
+    showToast("Select a term, academic year, program, section, and course.", true);
     return;
   }
 
@@ -314,6 +323,7 @@ async function submitNewEnrollment(event) {
         program,
         semester: enrollmentState.selectedSemester._id,
         block,
+        courses,
         standing_year: standingYear || undefined,
       }),
     });
