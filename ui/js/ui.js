@@ -43,7 +43,8 @@ export function getEnrollmentForStudent(studentId) {
 }
 
 export function courseEntryMatchesId(entry, courseId) {
-  return String(entry.course._id) === String(courseId);
+  const id = entry?.course?._id || entry?.course || entry?._id || entry;
+  return String(id) === String(courseId);
 }
 
 export function renderPagination(selector, page, total, onChange) {
@@ -86,15 +87,17 @@ export function renderPrograms() {
 
   const courseProgram = document.querySelector("#course-program");
   if (courseProgram) {
+    const selected = courseProgram.value;
     courseProgram.innerHTML = `
       <option value="">All programs</option>
       ${state.programs
         .map(
           (program) =>
-            `<option value="${escapeHtml(program._id)}">${escapeHtml(program.name)}</option>`,
+            `<option value="${escapeHtml(program._id)}">${escapeHtml(program.name)}${program.major ? ` · ${escapeHtml(program.major)}` : ""}</option>`,
         )
         .join("")}
     `;
+    courseProgram.value = selected;
   }
 }
 

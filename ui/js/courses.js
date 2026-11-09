@@ -53,7 +53,12 @@ export function renderCourses() {
               <td>${escapeHtml(course.units)}</td>
               <td>${course.prerequisites?.length
                 ? course.prerequisites
-                    .map((prerequisite) => escapeHtml(prerequisite.name || prerequisite))
+                    .map((prerequisite) => {
+                      const code = prerequisite?.code;
+                      const name = prerequisite?.name;
+                      if (code && name) return escapeHtml(`${code} · ${name}`);
+                      return escapeHtml(code || name || prerequisite);
+                    })
                     .join(", ")
                 : "None"}</td>
               <td>${getCourseEnrollmentCount(course._id)}</td>

@@ -84,10 +84,6 @@ function validateNewStudentFields(container) {
   }
 
   // Enrollment fields
-  if (!field("standing_year")) {
-    showFieldError(container, "standing_year", "Select year level.");
-    valid = false;
-  }
   if (!field("program")) {
     showFieldError(container, "program", "Select a program.");
     valid = false;
@@ -630,7 +626,6 @@ async function submitNewEnrollment(event) {
   const field = (name) => newPart?.querySelector(`[name="${name}"]`)?.value.trim();
   const program = field("program");
   const block = field("block");
-  const standingYear = field("standing_year");
   const courses = getSelectedCourseIds(newPart);
 
   // Validate required student and enrollment fields before making the API call.
@@ -673,7 +668,6 @@ async function submitNewEnrollment(event) {
         semester: enrollmentState.selectedSemester._id,
         block,
         courses,
-        standing_year: standingYear || undefined,
       }),
     });
 

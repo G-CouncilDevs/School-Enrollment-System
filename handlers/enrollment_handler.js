@@ -144,7 +144,7 @@ export async function createEnrollment(req, res) {
                 program:       req.body.program,
                 semester:      req.body.semester,
                 block:         req.body.block,
-                standing_year: req.body.standing_year
+                standing_year: newStudent ? 1 : req.body.standing_year
             }], { session })
  
             const enrolled = []

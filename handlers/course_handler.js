@@ -52,6 +52,7 @@ export async function getCourses(req, res) {
 
         const [courses, total] = await Promise.all([
             Course.find(filter)
+                .populate({ path: "prerequisites", select: "code name" })
                 .sort({code: 1})
                 .skip((page - 1) * limit)
                 .limit(limit),
@@ -73,6 +74,7 @@ export async function getCourse(req, res) {
         }
 
         const course = await Course.findById(id)
+            .populate({ path: "prerequisites", select: "code name" })
         if(!course) return res.status(404).json({error: "Course not found"})
 
         res.status(200).json(course)

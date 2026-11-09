@@ -32,6 +32,7 @@ export async function getPrograms(req, res) {
 
         const [programs, total] = await Promise.all([
             Program.find(filter)
+                .populate({ path: "courses.course", select: "code name units" })
                 .sort({name: 1})
                 .skip((page - 1) * limit)
                 .limit(limit),
