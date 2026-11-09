@@ -3,9 +3,7 @@ import { PAGE_SIZE, state } from "./state.js";
 import {
   escapeHtml,
   courseEntryMatchesId,
-  getEnrollmentForStudent,
   getFormPayload,
-  renderMajors,
   renderPagination,
   setLoading,
   showToast,
@@ -53,7 +51,6 @@ export function openStudentDialog(student) {
   if (!dialog || !form) return;
 
   state.selectedStudent = student;
-  const enrollment = getEnrollmentForStudent(student._id);
   form.elements.student_id.value = student._id;
   form.elements.first_name.value = student.first_name || "";
   form.elements.middle_name.value = student.middle_name || "";
@@ -66,13 +63,6 @@ export function openStudentDialog(student) {
   form.elements.barangay.value = student.address?.barangay || "";
   form.elements.city.value = student.address?.city || "";
   form.elements.province.value = student.address?.province || "";
-  form.elements.standing_year.value = enrollment?.standing_year || "";
-  form.elements.program.value = enrollment?.program?._id || enrollment?.program || "";
-  renderMajors(form.elements.program.value, form.elements.major);
-  form.elements.major.value = enrollment?.program?.major || "";
-  document.querySelector("#student-enroll-note").textContent = enrollment
-    ? "Enrollment details update together with this student."
-    : "This student has no enrollment record to update.";
   dialog.showModal();
 }
 
@@ -121,15 +111,6 @@ export async function updateStudent(event, loadData) {
 
   try {
     await putJson(`/students/${student._id}`, studentChanges);
-    const enrollment = getEnrollmentForStudent(student._id);
-    if (enrollment && (payload.program || payload.standing_year)) {
-      await putJson(`/enrollments/${enrollment._id}`, {
-        program: payload.program || enrollment.program?._id || enrollment.program,
-        standing_year: payload.standing_year
-          ? Number(payload.standing_year)
-          : enrollment.standing_year,
-      });
-    }
     form.closest("dialog").close();
     showToast("Student saved.");
     await loadData();
