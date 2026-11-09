@@ -67,13 +67,9 @@ export function renderCourses() {
                     })
                     .join(", ")
                 : "None"}</td>
+              <td>${(() => { const n = getCourseEnrollmentCount(course._id); return `${n} student${n === 1 ? "" : "s"}`; })()}</td>
               <td>
-                <button type="button" class="btn light small" data-course-roster="${escapeHtml(course._id)}" title="View students enrolled in this course">
-                  ${getCourseEnrollmentCount(course._id)} student${getCourseEnrollmentCount(course._id) === 1 ? "" : "s"}
-                </button>
-              </td>
-              <td>
-                <button type="button" class="btn light small" data-course-roster="${escapeHtml(course._id)}">Students</button>
+                <button type="button" class="btn light small" data-course-roster="${escapeHtml(course._id)}">View Students</button>
                 <button type="button" class="btn light small" data-course-edit="${escapeHtml(course._id)}">Edit</button>
                 <button type="button" class="btn light small danger-text" data-course-delete="${escapeHtml(course._id)}">Delete</button>
               </td>
@@ -191,7 +187,7 @@ export async function openCourseRosterDialog(course) {
           <tr>
             <td><strong>${escapeHtml(student._id)}</strong></td>
             <td>${escapeHtml(name || "Unknown")}</td>
-            <td>${escapeHtml(programName)}</td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(programName)}">${escapeHtml(programName)}</td>
             <td>${escapeHtml(student.sex || "—")}</td>
           </tr>
         `;
