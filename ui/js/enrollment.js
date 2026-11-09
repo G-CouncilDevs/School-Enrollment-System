@@ -231,11 +231,72 @@ async function submitExistingEnrollment(event) {
   }
 }
 
+// Create a new student, then create the student's first enrollment.
+async function submitNewEnrollment(event) {
+  event.preventDefault();
+  if (!document.querySelector("#mode-new")?.checked) return;
+
+  const newPart = document.querySelector("#new-part");
+  const field = (name) => newPart?.querySelector(`[name="${name}"]`)?.value.trim();
+  const program = field("program");
+  const block = field("block");
+  const standingYear = field("standing_year");
+
+  if (!enrollmentState.selectedSemester || !program || !block) {
+    showToast("Select a term, academic year, program, and section.", true);
+    return;
+  }
+
+  try {
+    const student = await requestJson("/students", {
+      method: "POST",
+      body: JSON.stringify({
+        first_name: field("first_name"),
+        middle_name: field("middle_name"),
+        last_name: field("last_name"),
+        sex: field("sex"),
+        birth_date: field("birth_date"),
+        address: {
+          street: field("street"),
+          barangay: field("barangay"),
+          city: field("city"),
+          province: field("province"),
+        },
+      }),
+    });
+
+    const response = await requestJson("/enrollments", {
+      method: "POST",
+      body: JSON.stringify({
+        student: student._id,
+        program,
+        semester: enrollmentState.selectedSemester._id,
+        block,
+        standing_year: standingYear || undefined,
+      }),
+    });
+
+    showToast(
+      `Student ${student._id} created. ${response.enrolled.length} course(s) enrolled.`,
+    );
+    event.currentTarget.reset();
+    enrollmentState.selectedBlock = null;
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
 // Connect term, year, and student-search controls to their handlers.
 function bindEnrollmentEvents() {
   document.querySelector("#enroll-form")?.addEventListener(
     "submit",
-    submitExistingEnrollment,
+    (event) => {
+      if (document.querySelector("#mode-new")?.checked) {
+        submitNewEnrollment(event);
+      } else {
+        submitExistingEnrollment(event);
+      }
+    },
   );
   document.querySelector("#enroll-term")?.addEventListener("change", renderBlocks);
   document.querySelector("#enroll-year")?.addEventListener("change", renderBlocks);
