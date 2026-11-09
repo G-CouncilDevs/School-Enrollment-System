@@ -114,14 +114,31 @@ function renderPrograms() {
   });
 }
 
-// Update major select with the selected program's major.
+// Update major select with majors available for the selected program.
 function renderProgramMajor(programId, select) {
   if (!select) return;
+  if (!programId) {
+    select.innerHTML = '<option value="">Select a program first</option>';
+    return;
+  }
+  // Collect unique majors from all programs sharing the same name.
   const program = enrollmentState.programs.find(
     (candidate) => String(candidate._id) === String(programId),
   );
-  select.innerHTML = program?.major
-    ? `<option value="${escapeHtml(program.major)}">${escapeHtml(program.major)}</option>`
+  const majors = program
+    ? [...new Set(
+        enrollmentState.programs
+          .filter((p) => p.name === program.name && p.major)
+          .map((p) => p.major),
+      )]
+    : [];
+  select.innerHTML = majors.length
+    ? majors
+        .map(
+          (major) =>
+            `<option value="${escapeHtml(major)}">${escapeHtml(major)}</option>`,
+        )
+        .join("")
     : '<option value="">No major listed</option>';
 }
 
