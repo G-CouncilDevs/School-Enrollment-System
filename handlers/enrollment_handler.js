@@ -26,11 +26,15 @@ const isId = (value) => mongoose.isValidObjectId(String(value))
 export async function createEnrollment(req, res) {
     const session = await mongoose.startSession()
     try{
+        const approvedBy = req.session.employeeId
         const student = Number(req.body.student)
         if (!Number.isInteger(student) || student <= 0) {
             return res.status(400).json({error: "student must be a student id number"})
         }
-        for (const field of ["approved_by", "program", "semester", "block"]) {
+        if (!isId(approvedBy)) {
+            return res.status(401).json({error: "Authentication required"})
+        }
+        for (const field of ["program", "semester", "block"]) {
             if (!isId(req.body[field])) {
                 return res.status(400).json({error: `Invalid ${field} id`})
             }
@@ -38,7 +42,7 @@ export async function createEnrollment(req, res) {
  
         const [studentExists, employeeExists, programExists, semester, block] = await Promise.all([
             Student.exists({ _id: student }),
-            Employee.exists({ _id: req.body.approved_by }),
+            Employee.exists({ _id: approvedBy }),
             Program.exists({ _id: req.body.program }),
             Semester.findById(req.body.semester),
             Block.findById(req.body.block)
@@ -91,7 +95,7 @@ export async function createEnrollment(req, res) {
         await session.withTransaction(async () => {
             const [created] = await Enrollment.create([{
                 student,
-                approved_by:   req.body.approved_by,
+                approved_by:   approvedBy,
                 program:       req.body.program,
                 semester:      req.body.semester,
                 block:         req.body.block,

@@ -1,6 +1,6 @@
 import { enrollmentState } from "./enrollment-state.js";
 import { requestJson } from "./api.js";
-import { escapeHtml } from "./ui.js";
+import { escapeHtml, showToast } from "./ui.js";
 
 // Fill program dropdowns with programs loaded from the API.
 function renderPrograms() {
@@ -192,8 +192,51 @@ function bindStudentSearch() {
   });
 }
 
+// Submit an existing-student enrollment using the selected student and block.
+async function submitExistingEnrollment(event) {
+  event.preventDefault();
+  if (!document.querySelector("#mode-existing")?.checked) return;
+
+  const existingPart = document.querySelector("#existing-part");
+  const student = enrollmentState.selectedStudent;
+  const program = existingPart?.querySelector('[name="program"]')?.value;
+  const block = existingPart?.querySelector('[name="block"]')?.value;
+  const standingYear = existingPart?.querySelector('[name="standing_year"]')?.value;
+
+  if (!student || !program || !enrollmentState.selectedSemester || !block) {
+    showToast("Select a student, program, term, academic year, and section.", true);
+    return;
+  }
+
+  try {
+    const response = await requestJson("/enrollments", {
+      method: "POST",
+      body: JSON.stringify({
+        student: student._id,
+        program,
+        semester: enrollmentState.selectedSemester._id,
+        block,
+        standing_year: standingYear || undefined,
+      }),
+    });
+
+    showToast(
+      `Enrollment created. ${response.enrolled.length} course(s) enrolled.`,
+    );
+    event.currentTarget.reset();
+    enrollmentState.selectedStudent = null;
+    enrollmentState.selectedBlock = null;
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
 // Connect term, year, and student-search controls to their handlers.
 function bindEnrollmentEvents() {
+  document.querySelector("#enroll-form")?.addEventListener(
+    "submit",
+    submitExistingEnrollment,
+  );
   document.querySelector("#enroll-term")?.addEventListener("change", renderBlocks);
   document.querySelector("#enroll-year")?.addEventListener("change", renderBlocks);
   document.querySelectorAll("[data-sections]").forEach((select) => {
