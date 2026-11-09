@@ -440,7 +440,6 @@ function renderEnrollments() {
           <td>${escapeHtml(enrollment.block?.section_name || "—")}</td>
           <td>${escapeHtml(courses || "No courses")}</td>
           <td>
-            <button type="button" class="btn light small" disabled>Edit</button>
             <button type="button" class="btn light small danger-text" data-enrollment-drop="${escapeHtml(enrollment._id)}">Remove</button>
           </td>
         </tr>
@@ -784,7 +783,7 @@ function bindEnrollmentEvents() {
   });
   document.querySelectorAll("[data-programs]").forEach((select) => {
     select.addEventListener("change", (event) => {
-      const container = event.target.closest("#new-part, #existing-part, #student-dialog");
+      const container = event.target.closest("#new-part, #existing-part");
       const majorSelect = container?.querySelector("[data-majors]");
       renderProgramMajor(event.target.value, majorSelect);
       renderBlocks(container);
@@ -792,7 +791,7 @@ function bindEnrollmentEvents() {
   });
   document.querySelectorAll("[data-majors]").forEach((select) => {
     select.addEventListener("change", (event) => {
-      const container = event.target.closest("#new-part, #existing-part, #student-dialog");
+      const container = event.target.closest("#new-part, #existing-part");
       renderBlocks(container);
     });
   });
