@@ -31,13 +31,34 @@
   <main>
     <h1>Student &amp; Course Management</h1>
 
+    <!-- Term & Academic Year filter bar -->
+    <div class="panel term-bar">
+      <div>
+        <h3 style="margin: 0; font-size: 16px;">Active Semester Term</h3>
+        <p class="sub" id="term-label" style="margin: 4px 0 0;">Loading term…</p>
+      </div>
+      <div class="row" style="margin: 0; gap: 12px;">
+        <label style="flex-direction: row; align-items: center; gap: 8px;">
+          <span>Term</span>
+          <select id="dashboard-term">
+            <option value="1st">1st Term</option>
+            <option value="2nd">2nd Term</option>
+            <option value="3rd">3rd Term</option>
+          </select>
+        </label>
+        <label style="flex-direction: row; align-items: center; gap: 8px;">
+          <span>Academic Year</span>
+          <select id="dashboard-year"></select>
+        </label>
+      </div>
+    </div>
+
     <!-- Numbers (filled in by script.js) -->
     <section class="metrics">
       <div class="dark"><p>Total Enrolled Students</p><strong id="metric-enrolled">–</strong></div>
       <div><p>Active Courses</p><strong id="metric-courses">–</strong></div>
       <div><p>Registered Students</p><strong id="metric-students">–</strong></div>
     </section>
-    <p class="sub term-label" id="term-label"></p>
 
     <!-- Courses -->
     <section class="panel">
@@ -142,6 +163,33 @@
           <button type="submit" class="btn danger">Delete</button>
         </div>
       </form>
+    </div>
+  </dialog>
+
+  <!-- Enrolled students per course roster popup -->
+  <dialog class="modal wide" id="roster-dialog">
+    <div class="modal-box">
+      <h2 id="roster-dialog-title">Enrolled Students</h2>
+      <p class="sub" id="roster-dialog-sub">Loading enrolled students…</p>
+
+      <div class="table-wrap" style="max-height: 380px; overflow: auto; margin: 16px 0 14px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Sex</th>
+            </tr>
+          </thead>
+          <tbody id="roster-rows">
+            <tr><td colspan="3" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn light" data-close>Close</button>
+      </div>
     </div>
   </dialog>
 

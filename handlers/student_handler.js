@@ -44,13 +44,23 @@ export async function getStudents(req, res) {
             }
         }
 
+        const enrollmentFilter = {}
         if (req.query.program) {
             if (!mongoose.isValidObjectId(req.query.program)) {
                 return res.status(400).json({error: "Invalid program id"})
             }
-            const enrolledStudentIds = await Enrollment.distinct("student", {
-                program: req.query.program
-            })
+            enrollmentFilter.program = req.query.program
+        }
+
+        if (req.query.semester && !req.query.course) {
+            if (!mongoose.isValidObjectId(req.query.semester)) {
+                return res.status(400).json({error: "Invalid semester id"})
+            }
+            enrollmentFilter.semester = req.query.semester
+        }
+
+        if (Object.keys(enrollmentFilter).length > 0) {
+            const enrolledStudentIds = await Enrollment.distinct("student", enrollmentFilter)
             andClauses.push({ _id: { $in: enrolledStudentIds } })
         }
 
@@ -58,9 +68,14 @@ export async function getStudents(req, res) {
             if (!mongoose.isValidObjectId(req.query.course)) {
                 return res.status(400).json({error: "Invalid course id"})
             }
-            const enrolledStudentIds = await CourseEnrollment.distinct("student", {
-                course: req.query.course
-            })
+            const query = { course: req.query.course }
+            if (req.query.semester) {
+                if (!mongoose.isValidObjectId(req.query.semester)) {
+                    return res.status(400).json({error: "Invalid semester id"})
+                }
+                query.semester = req.query.semester
+            }
+            const enrolledStudentIds = await CourseEnrollment.distinct("student", query)
             andClauses.push({ _id: { $in: enrolledStudentIds } })
         }
 

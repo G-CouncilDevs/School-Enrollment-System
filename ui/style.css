@@ -146,7 +146,7 @@ input:disabled, select:disabled { color: #94a3b8; background: #f1f5f9; cursor: n
 
 /* ---------- Tables ---------- */
 .table-wrap { overflow-x: auto; margin: 16px 0 14px; }
-table { width: 100%; min-width: 700px; border-collapse: collapse; }
+table { width: 100%; min-width: 780px; border-collapse: collapse; }
 
 th {
   padding: 10px 8px;
@@ -158,6 +158,7 @@ th {
 }
 
 td { padding: 14px 8px; border-top: 1px solid var(--line); }
+td:last-child { white-space: nowrap; }
 
 /* ---------- Student list (dashboard) ---------- */
 .students { margin: 0; padding: 0; list-style: none; }
@@ -204,7 +205,15 @@ td { padding: 14px 8px; border-top: 1px solid var(--line); }
 .toast.error { background: var(--red); }
 
 .empty { color: var(--gray); text-align: center; }
-.term-label { margin: -14px 0 20px; }
+.term-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.term-label { margin: 0; }
 .term-label:empty { display: none; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn.small { padding: 7px 12px; font-size: 14px; }

@@ -16,7 +16,11 @@ import {
 
 // Count students in blocks that include the selected course.
 function getCourseEnrollmentCount(courseId) {
+  const semesterId = state.selectedSemester?._id;
   return state.blocks.reduce((total, block) => {
+    if (semesterId && String(block.semester?._id || block.semester) !== String(semesterId)) {
+      return total;
+    }
     const course = block.courses?.some((entry) =>
       courseEntryMatchesId(entry, courseId),
     );
@@ -63,8 +67,13 @@ export function renderCourses() {
                     })
                     .join(", ")
                 : "None"}</td>
-              <td>${getCourseEnrollmentCount(course._id)}</td>
               <td>
+                <button type="button" class="btn light small" data-course-roster="${escapeHtml(course._id)}" title="View students enrolled in this course">
+                  ${getCourseEnrollmentCount(course._id)} student${getCourseEnrollmentCount(course._id) === 1 ? "" : "s"}
+                </button>
+              </td>
+              <td>
+                <button type="button" class="btn light small" data-course-roster="${escapeHtml(course._id)}">Students</button>
                 <button type="button" class="btn light small" data-course-edit="${escapeHtml(course._id)}">Edit</button>
                 <button type="button" class="btn light small danger-text" data-course-delete="${escapeHtml(course._id)}">Delete</button>
               </td>
@@ -129,6 +138,54 @@ export function openCourseDeleteDialog(course) {
   state.selectedCourseToDelete = course;
   name.textContent = `${course.code} · ${course.name}`;
   dialog.showModal();
+}
+
+// Open the dialog listing students enrolled in a specific course.
+export async function openCourseRosterDialog(course) {
+  const dialog = document.querySelector("#roster-dialog");
+  const title = document.querySelector("#roster-dialog-title");
+  const sub = document.querySelector("#roster-dialog-sub");
+  const rows = document.querySelector("#roster-rows");
+  if (!dialog || !title || !rows) return;
+
+  title.textContent = `${course.code} · ${course.name}`;
+  sub.textContent = "Loading enrolled students…";
+  rows.innerHTML = '<tr><td colspan="3" class="empty">Loading…</td></tr>';
+  dialog.showModal();
+
+  try {
+    const sem = state.selectedSemester;
+    const semParam = sem ? `&semester=${encodeURIComponent(sem._id)}` : "";
+    const response = await requestJson(
+      `/students?course=${encodeURIComponent(course._id)}${semParam}&page=1&limit=100`,
+    );
+    const students = response.students || [];
+
+    const termText = sem ? ` (${sem.semester_term} Term ${sem.academic_year})` : "";
+    sub.textContent = `${students.length} student${students.length === 1 ? "" : "s"} enrolled${termText}`;
+    if (students.length === 0) {
+      rows.innerHTML = '<tr><td colspan="3" class="empty">No students enrolled in this course.</td></tr>';
+      return;
+    }
+
+    rows.innerHTML = students
+      .map((student) => {
+        const name = [student.first_name, student.middle_name, student.last_name]
+          .filter(Boolean)
+          .join(" ");
+        return `
+          <tr>
+            <td><strong>${escapeHtml(student._id)}</strong></td>
+            <td>${escapeHtml(name || "Unknown")}</td>
+            <td>${escapeHtml(student.sex || "—")}</td>
+          </tr>
+        `;
+      })
+      .join("");
+  } catch (err) {
+    sub.textContent = "Failed to load students.";
+    rows.innerHTML = `<tr><td colspan="3" class="empty">${escapeHtml(err.message)}</td></tr>`;
+  }
 }
 
 // Load one page of courses from the API and refresh related dashboard elements.

@@ -5,6 +5,7 @@ import {
   loadCourses,
   openCourseDeleteDialog,
   openCourseDialog,
+  openCourseRosterDialog,
   renderCourses,
 } from "./courses.js";
 import { state } from "./state.js";
@@ -28,16 +29,69 @@ async function loadPrograms() {
   renderPrograms();
 }
 
+function renderDashboardAcademicYears() {
+  const years = [...new Set(state.semesters.map((s) => s.academic_year))].sort((a, b) => b - a);
+  const select = document.querySelector("#dashboard-year");
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = years
+    .map((year) => `<option value="${year}">${year}</option>`)
+    .join("");
+  if (current && years.includes(Number(current))) {
+    select.value = current;
+  }
+}
+
+function updateDashboardSemester() {
+  const term = document.querySelector("#dashboard-term")?.value;
+  const year = Number(document.querySelector("#dashboard-year")?.value);
+  const semester = state.semesters.find(
+    (s) => s.semester_term === term && s.academic_year === year,
+  );
+  state.selectedSemester = semester || null;
+
+  const label = document.querySelector("#term-label");
+  if (label) {
+    if (semester) {
+      label.textContent = `Viewing records for ${semester.semester_term} Term AY ${semester.academic_year}.`;
+    } else {
+      label.textContent = `No active semester found for ${term || "—"} AY ${year || "—"}.`;
+    }
+  }
+
+  // Update enrolled students metric for the selected semester
+  const relevantEnrollments = semester
+    ? state.enrollments.filter(
+        (e) => String(e.semester?._id || e.semester) === String(semester._id),
+      )
+    : state.enrollments;
+
+  const enrolledMetric = document.querySelector("#metric-enrolled");
+  if (enrolledMetric) {
+    enrolledMetric.textContent = new Set(
+      relevantEnrollments.map((e) => e.student?._id || e.student),
+    ).size;
+  }
+
+  // Refresh courses to update "Enrolled this term" counts
+  renderCourses();
+
+  // Refresh students list for the selected semester
+  state.studentPage = 1;
+  loadStudents(handleLoadError).catch(handleLoadError);
+}
+
 async function loadEnrollmentData() {
-  const [enrollments, blocks] = await Promise.all([
-    requestJson("/enrollments"),
-    requestJson("/blocks"),
+  const [enrollments, blocks, semesters] = await Promise.all([
+    requestJson("/enrollments?page=1&limit=100"),
+    requestJson("/blocks?page=1&limit=100"),
+    requestJson("/semesters?page=1&limit=100"),
   ]);
   state.enrollments = enrollments?.enrollments || enrollments || [];
   state.blocks = blocks?.blocks || blocks || [];
-  document.querySelector("#metric-enrolled").textContent = new Set(
-    state.enrollments.map((enrollment) => enrollment.student),
-  ).size;
+  state.semesters = semesters?.semesters || semesters || [];
+  renderDashboardAcademicYears();
+  updateDashboardSemester();
 }
 
 function handleLoadError(error) {
@@ -47,6 +101,8 @@ function handleLoadError(error) {
 }
 
 function bindDashboardEvents(loadData) {
+  document.querySelector("#dashboard-term")?.addEventListener("change", updateDashboardSemester);
+  document.querySelector("#dashboard-year")?.addEventListener("change", updateDashboardSemester);
   document.querySelector("#course-search")?.addEventListener("input", () => {
     state.coursePage = 1;
     loadCourses(handleLoadError).catch(handleLoadError);
@@ -87,6 +143,15 @@ function bindDashboardEvents(loadData) {
   });
 
   document.addEventListener("click", (event) => {
+    const courseRoster = event.target.closest("[data-course-roster]");
+    if (courseRoster) {
+      const course = state.courses.find(
+        (c) => String(c._id) === courseRoster.dataset.courseRoster,
+      );
+      if (course) openCourseRosterDialog(course);
+      return;
+    }
+
     const courseEdit = event.target.closest("[data-course-edit]");
     if (courseEdit) {
       openCourseDialog(

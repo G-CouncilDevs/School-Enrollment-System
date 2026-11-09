@@ -67,6 +67,7 @@ export async function loadStudents(handleLoadError) {
   const programSelect = document.querySelector("#student-program");
   const search = input?.value.trim() || "";
   const programId = programSelect?.value || "";
+  const semesterId = state.selectedSemester?._id || "";
 
   const params = new URLSearchParams({
     page: String(state.studentPage),
@@ -74,6 +75,7 @@ export async function loadStudents(handleLoadError) {
   });
   if (search) params.set("search", search);
   if (programId) params.set("program", programId);
+  if (semesterId) params.set("semester", semesterId);
 
   setLoading("#student-list", "Loading students…");
   const response = await requestJson(`/students?${params}`);
@@ -84,7 +86,10 @@ export async function loadStudents(handleLoadError) {
     state.studentPage = page;
     loadStudents(handleLoadError).catch(handleLoadError);
   });
-  document.querySelector("#metric-students").textContent = state.studentTotal;
+  if (!programId && !semesterId) {
+    const metric = document.querySelector("#metric-students");
+    if (metric) metric.textContent = state.studentTotal;
+  }
 }
 
 export async function updateStudent(event, loadData) {

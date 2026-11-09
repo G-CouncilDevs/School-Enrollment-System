@@ -6,6 +6,8 @@ export const state = {
   programs: [],
   enrollments: [],
   blocks: [],
+  semesters: [],
+  selectedSemester: null,
   coursePage: 1,
   studentPage: 1,
   courseTotal: 0,
