@@ -150,7 +150,7 @@ export async function openCourseRosterDialog(course) {
 
   title.textContent = `${course.code} · ${course.name}`;
   sub.textContent = "Loading enrolled students…";
-  rows.innerHTML = '<tr><td colspan="3" class="empty">Loading…</td></tr>';
+  rows.innerHTML = '<tr><td colspan="4" class="empty">Loading…</td></tr>';
   dialog.showModal();
 
   try {
@@ -164,7 +164,7 @@ export async function openCourseRosterDialog(course) {
     const termText = sem ? ` (${sem.semester_term} Term ${sem.academic_year})` : "";
     sub.textContent = `${students.length} student${students.length === 1 ? "" : "s"} enrolled${termText}`;
     if (students.length === 0) {
-      rows.innerHTML = '<tr><td colspan="3" class="empty">No students enrolled in this course.</td></tr>';
+      rows.innerHTML = '<tr><td colspan="4" class="empty">No students enrolled in this course.</td></tr>';
       return;
     }
 
@@ -173,10 +173,25 @@ export async function openCourseRosterDialog(course) {
         const name = [student.first_name, student.middle_name, student.last_name]
           .filter(Boolean)
           .join(" ");
+
+        const enrollment = state.enrollments.find((e) => {
+          const sId = String(e.student?._id || e.student);
+          const semMatch = sem ? String(e.semester?._id || e.semester) === String(sem._id) : true;
+          return sId === String(student._id) && semMatch;
+        });
+
+        let programName = "—";
+        if (enrollment) {
+          const progId = enrollment.program?._id || enrollment.program;
+          const foundProg = state.programs.find((p) => String(p._id) === String(progId));
+          programName = foundProg?.name || enrollment.program?.name || enrollment.block?.section_name || "—";
+        }
+
         return `
           <tr>
             <td><strong>${escapeHtml(student._id)}</strong></td>
             <td>${escapeHtml(name || "Unknown")}</td>
+            <td>${escapeHtml(programName)}</td>
             <td>${escapeHtml(student.sex || "—")}</td>
           </tr>
         `;
@@ -184,7 +199,7 @@ export async function openCourseRosterDialog(course) {
       .join("");
   } catch (err) {
     sub.textContent = "Failed to load students.";
-    rows.innerHTML = `<tr><td colspan="3" class="empty">${escapeHtml(err.message)}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -213,8 +228,14 @@ export async function loadCourses(handleLoadError) {
   });
 
   const total = document.querySelector("#course-total");
-  if (total) total.textContent = `${state.courseTotal} active course${state.courseTotal === 1 ? "" : "s"}`;
-  if (!programId) {
+  if (total) {
+    if (search || programId) {
+      total.textContent = `${state.courseTotal} course${state.courseTotal === 1 ? "" : "s"} found`;
+    } else {
+      total.textContent = `${state.courseTotal} active course${state.courseTotal === 1 ? "" : "s"}`;
+    }
+  }
+  if (!programId && !search) {
     const metric = document.querySelector("#metric-courses");
     if (metric) metric.textContent = state.courseTotal;
   }

@@ -82,14 +82,27 @@ function updateDashboardSemester() {
 }
 
 async function loadEnrollmentData() {
-  const [enrollments, blocks, semesters] = await Promise.all([
+  const [enrollments, blocks, semesters, allStudents, allCourses] = await Promise.all([
     requestJson("/enrollments?page=1&limit=100"),
     requestJson("/blocks?page=1&limit=100"),
     requestJson("/semesters?page=1&limit=100"),
+    requestJson("/students?page=1&limit=1"),
+    requestJson("/courses?page=1&limit=1"),
   ]);
   state.enrollments = enrollments?.enrollments || enrollments || [];
   state.blocks = blocks?.blocks || blocks || [];
   state.semesters = semesters?.semesters || semesters || [];
+
+  const studentsMetric = document.querySelector("#metric-students");
+  if (studentsMetric && allStudents?.total !== undefined) {
+    studentsMetric.textContent = allStudents.total;
+  }
+
+  const coursesMetric = document.querySelector("#metric-courses");
+  if (coursesMetric && allCourses?.total !== undefined) {
+    coursesMetric.textContent = allCourses.total;
+  }
+
   renderDashboardAcademicYears();
   updateDashboardSemester();
 }

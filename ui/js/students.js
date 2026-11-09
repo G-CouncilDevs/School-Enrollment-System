@@ -86,7 +86,7 @@ export async function loadStudents(handleLoadError) {
     state.studentPage = page;
     loadStudents(handleLoadError).catch(handleLoadError);
   });
-  if (!programId && !semesterId) {
+  if (!programId && !semesterId && !search) {
     const metric = document.querySelector("#metric-students");
     if (metric) metric.textContent = state.studentTotal;
   }
