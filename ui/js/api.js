@@ -9,6 +9,11 @@ export async function requestJson(path, options = {}) {
     ...options,
   });
 
+  if (response.status === 401) {
+    window.location.href = "/login.html";
+    throw new Error("Session expired");
+  }
+
   const responseText = await response.text();
   let responseBody = null;
 

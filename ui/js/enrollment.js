@@ -1,5 +1,5 @@
 import { enrollmentState } from "./enrollment-state.js";
-import { requestJson } from "./api.js";
+import { requestJson, deleteJson } from "./api.js";
 import { escapeHtml, showToast } from "./ui.js";
 
 // ── Field-level validation helpers ──────────────────────────────────
@@ -326,7 +326,10 @@ function renderEnrollments() {
           <td>${escapeHtml(enrollment.standing_year || "—")}</td>
           <td>${escapeHtml(enrollment.block?.section_name || "—")}</td>
           <td>${escapeHtml(courses || "No courses")}</td>
-          <td><button type="button" class="btn light small" disabled>Edit</button></td>
+          <td>
+            <button type="button" class="btn light small" disabled>Edit</button>
+            <button type="button" class="btn light small danger-text" data-enrollment-drop="${escapeHtml(enrollment._id)}">Remove</button>
+          </td>
         </tr>
       `;
     })
@@ -474,6 +477,7 @@ async function submitExistingEnrollment(event) {
     return;
   }
 
+  const form = event.currentTarget;
   setSubmitting(true);
   try {
     const response = await requestJson("/enrollments", {
@@ -492,7 +496,7 @@ async function submitExistingEnrollment(event) {
       formatEnrollmentSummary(response, "Enrollment created."),
       response.enrolled?.length === 0,
     );
-    event.currentTarget.reset();
+    form.reset();
     enrollmentState.selectedStudent = null;
     enrollmentState.selectedBlock = null;
     await refreshSemesters();
@@ -536,6 +540,7 @@ async function submitNewEnrollment(event) {
     return;
   }
 
+  const form = event.currentTarget;
   setSubmitting(true);
   try {
     const response = await requestJson("/enrollments", {
@@ -567,7 +572,7 @@ async function submitNewEnrollment(event) {
       ),
       response.enrolled?.length === 0,
     );
-    event.currentTarget.reset();
+    form.reset();
     clearFieldErrors(newPart);
     const coursesError = document.querySelector('[data-error-for="courses"]');
     if (coursesError) coursesError.textContent = "";
@@ -580,6 +585,61 @@ async function submitNewEnrollment(event) {
   } finally {
     setSubmitting(false);
   }
+}
+
+// Wire the enrollment Remove button and drop-dialog modal.
+function bindDropDialog() {
+  const dialog = document.querySelector("#drop-dialog");
+  const form = document.querySelector("#drop-form");
+  const nameEl = document.querySelector("#drop-name");
+  if (!dialog || !form) return;
+
+  let pendingId = null;
+
+  // Open dialog when a Remove button is clicked in the enrollment table.
+  document.querySelector("#enrollment-rows")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-enrollment-drop]");
+    if (!button) return;
+
+    pendingId = button.dataset.enrollmentDrop;
+    const enrollment = enrollmentState.enrollments.find(
+      (e) => String(e._id) === pendingId,
+    );
+    const student = enrollment?.student || {};
+    const name = [student.first_name, student.last_name].filter(Boolean).join(" ");
+    if (nameEl) nameEl.textContent = name || "this student";
+    dialog.showModal();
+  });
+
+  // Cancel button
+  dialog.querySelectorAll("[data-close]").forEach((button) => {
+    button.addEventListener("click", () => dialog.close());
+  });
+
+  // Confirm removal
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!pendingId) return;
+
+    const submitButton = form.querySelector('[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+
+    try {
+      const result = await deleteJson(`/enrollments/${pendingId}`);
+      dialog.close();
+      showToast(
+        `Enrollment removed. ${result.seats_released || 0} seat(s) released.`,
+      );
+      await refreshSemesters();
+      renderBlockCourses();
+      await loadEnrollments();
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+      pendingId = null;
+    }
+  });
 }
 
 // Connect term, year, and student-search controls to their handlers.
@@ -624,6 +684,7 @@ function bindEnrollmentEvents() {
     });
   });
   bindStudentSearch();
+  bindDropDialog();
 }
 
 // Load programs, semesters, and blocks into shared enrollment state.
