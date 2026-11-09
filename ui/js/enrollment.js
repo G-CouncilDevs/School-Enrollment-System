@@ -2,6 +2,65 @@ import { enrollmentState } from "./enrollment-state.js";
 import { requestJson } from "./api.js";
 import { escapeHtml, showToast } from "./ui.js";
 
+// ── Field-level validation helpers ──────────────────────────────────
+
+// Clear every field-error span inside a container.
+function clearFieldErrors(container) {
+  if (!container) return;
+  container.querySelectorAll("[data-error-for]").forEach((span) => {
+    span.textContent = "";
+  });
+}
+
+// Write a message next to the field identified by name.
+function showFieldError(container, field, message) {
+  const span = container.querySelector(`[data-error-for="${field}"]`);
+  if (span) span.textContent = message;
+}
+
+// Validate the new-student form fields and show per-field errors.
+// Returns true when every required field is filled in.
+function validateNewStudentFields(container) {
+  clearFieldErrors(container);
+
+  const field = (name) => container?.querySelector(`[name="${name}"]`)?.value.trim();
+  let valid = true;
+
+  // Student identity
+  if (!field("first_name")) {
+    showFieldError(container, "first_name", "First name is required.");
+    valid = false;
+  }
+  if (!field("last_name")) {
+    showFieldError(container, "last_name", "Last name is required.");
+    valid = false;
+  }
+  if (!field("sex")) {
+    showFieldError(container, "sex", "Select sex.");
+    valid = false;
+  }
+  if (!field("birth_date")) {
+    showFieldError(container, "birth_date", "Birth date is required.");
+    valid = false;
+  }
+
+  // Enrollment fields
+  if (!field("standing_year")) {
+    showFieldError(container, "standing_year", "Select year level.");
+    valid = false;
+  }
+  if (!field("program")) {
+    showFieldError(container, "program", "Select a program.");
+    valid = false;
+  }
+  if (!field("block")) {
+    showFieldError(container, "block", "Select a section.");
+    valid = false;
+  }
+
+  return valid;
+}
+
 // Fill program dropdowns with programs loaded from the API.
 function renderPrograms() {
   const options = enrollmentState.programs
@@ -300,8 +359,22 @@ async function submitNewEnrollment(event) {
   const standingYear = field("standing_year");
   const courses = getSelectedCourseIds(newPart);
 
-  if (!enrollmentState.selectedSemester || !program || !block || courses.length === 0) {
-    showToast("Select a term, academic year, program, section, and course.", true);
+  // Validate required student and enrollment fields before making the API call.
+  const fieldsValid = validateNewStudentFields(newPart);
+
+  if (!enrollmentState.selectedSemester) {
+    showToast("Select a term and academic year.", true);
+    return;
+  }
+
+  if (courses.length === 0) {
+    // Show the error next to the courses section (span lives outside the mode container).
+    const coursesError = document.querySelector('[data-error-for="courses"]');
+    if (coursesError) coursesError.textContent = "Select at least one course.";
+    if (fieldsValid) showToast("Select at least one course.", true);
+  }
+
+  if (!fieldsValid || courses.length === 0) {
     return;
   }
 
@@ -332,6 +405,9 @@ async function submitNewEnrollment(event) {
       `Student ${response.enrollment.student} created. ${response.enrolled.length} course(s) enrolled.`,
     );
     event.currentTarget.reset();
+    clearFieldErrors(newPart);
+    const coursesError = document.querySelector('[data-error-for="courses"]');
+    if (coursesError) coursesError.textContent = "";
     enrollmentState.selectedBlock = null;
     await loadEnrollments();
   } catch (error) {
