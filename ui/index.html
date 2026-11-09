@@ -8,7 +8,11 @@
   <link rel="stylesheet" href="style.css">
   <!-- demo.js only switches on when you open the page as a file or add ?demo (see the top of demo.js) -->
   <script src="demo.js" defer></script>
+<<<<<<< HEAD
   <script src="script.js" defer></script>
+=======
+  <script type="module" src="script.js"></script>
+>>>>>>> 9883fea9f26e70a89d46d10a3aae68695ca8d0c4
 </head>
 <body data-page="dashboard">
 
@@ -74,6 +78,7 @@
       </div>
 
       <p class="sub" id="course-count"></p>
+      <div class="row pagination" id="course-pagination" aria-label="Course pages"></div>
     </section>
 
     <!-- Student search -->
@@ -82,8 +87,8 @@
         <h2>Search Students</h2>
         <div class="row">
           <input type="search" id="student-search" placeholder="Search by name or ID…" aria-label="Search students">
-          <select id="student-course" aria-label="Only students taking this course">
-            <option value="">All students</option>
+          <select id="student-program" aria-label="Filter students by program">
+            <option value="">All programs</option>
           </select>
         </div>
       </div>
@@ -93,6 +98,7 @@
       </ul>
 
       <p class="sub" id="student-count"></p>
+      <div class="row pagination" id="student-pagination" aria-label="Student pages"></div>
     </section>
   </main>
 
@@ -104,6 +110,10 @@
     <div class="modal-box">
       <h2 id="course-dialog-title">Add Course</h2>
       <form id="course-form" novalidate>
+        <label>Course code
+          <input type="text" name="code" placeholder="e.g. CS101" required maxlength="20">
+          <span class="field-error" data-error-for="code"></span>
+        </label>
         <label>Course name
           <input type="text" name="name" placeholder="e.g. Introduction to Programming" required maxlength="120">
           <span class="field-error" data-error-for="name"></span>
@@ -166,6 +176,7 @@
             <label>City / Municipality <input type="text" name="city" maxlength="60"></label>
             <label>Province <input type="text" name="province" maxlength="60"></label>
           </div>
+<<<<<<< HEAD
           <label>Year level
             <select name="standing_year">
               <option value="">Select year level</option>
@@ -190,6 +201,9 @@
           </label>
         </div>
         <p class="sub" id="student-enroll-note"></p>
+=======
+        </div>
+>>>>>>> 9883fea9f26e70a89d46d10a3aae68695ca8d0c4
 
         <div class="modal-buttons spread">
           <button type="button" class="btn light danger-text" id="student-delete-btn">Delete student</button>
