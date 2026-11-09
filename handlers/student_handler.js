@@ -35,6 +35,20 @@ export async function createStudent(req, res) {
 export async function getStudents(req, res) {
     try{
         const filter = {}
+        if (req.query.search) {
+            const search = String(req.query.search).trim()
+            const safe = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            const expression = new RegExp(safe, "i")
+            filter.$or = [
+                { first_name: expression },
+                { last_name: expression },
+            ]
+
+            const studentId = Number(search)
+            if (Number.isInteger(studentId)) {
+                filter.$or.push({ _id: studentId })
+            }
+        }
         if(req.query.last_name){
             // Yeah that's regex, basically filters the special sybols, if someone decided to put a "*" it'll match everything, ts filters that
             const safe = String(req.query.last_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")

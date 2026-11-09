@@ -57,7 +57,11 @@ export async function getBlocks(req, res) {
         ])
         const populated = await Block.populate(blocks, [
             { path: "semester", select: "semester_term academic_year" },
-            { path: "courses.course", select: "code name units" },
+            {
+                path: "courses.course",
+                select: "code name units prerequisites",
+                populate: { path: "prerequisites", select: "code name" },
+            },
             { path: "courses.employee", select: "first_name middle_name last_name" },
         ])
         res.status(200).json({page, limit, total, blocks: populated})
@@ -75,7 +79,11 @@ export async function getBlock(req, res) {
  
         const block = await Block.findById(id)
             .populate({ path: "semester",         select: "semester_term academic_year" })
-            .populate({ path: "courses.course",   select: "code name units" })
+            .populate({
+                path: "courses.course",
+                select: "code name units prerequisites",
+                populate: { path: "prerequisites", select: "code name" },
+            })
             .populate({ path: "courses.employee", select: "first_name middle_name last_name" })
             .populate({ path: "students",         select: "first_name middle_name last_name" })
         if (!block) return res.status(404).json({error: "Block not found"})
