@@ -26,6 +26,37 @@ function setSubmitting(isSubmitting) {
   button.textContent = isSubmitting ? "Enrolling…" : "Enroll Student";
 }
 
+const SKIPPED_REASONS = {
+  no_seat: "Full",
+  missing_prerequisites: "Missing prerequisite",
+  already_passed: "Already passed",
+  not_open: "Closed",
+};
+
+// Format enrollment result message including enrolled and skipped courses with reasons.
+function formatEnrollmentSummary(response, title) {
+  const lines = [title];
+
+  if (response.enrolled?.length > 0) {
+    const enrolledCodes = response.enrolled.map((course) => course.code).join(", ");
+    lines.push(`Enrolled: ${enrolledCodes}`);
+  } else {
+    lines.push("Enrolled: None");
+  }
+
+  if (response.skipped?.length > 0) {
+    const skippedDetails = response.skipped
+      .map((item) => {
+        const reason = SKIPPED_REASONS[item.reason] || item.reason;
+        return `${item.code} (${reason})`;
+      })
+      .join(", ");
+    lines.push(`Skipped: ${skippedDetails}`);
+  }
+
+  return lines.join("\n");
+}
+
 // Validate the new-student form fields and show per-field errors.
 // Returns true when every required field is filled in.
 function validateNewStudentFields(container) {
@@ -345,7 +376,8 @@ async function submitExistingEnrollment(event) {
     });
 
     showToast(
-      `Enrollment created. ${response.enrolled.length} course(s) enrolled.`,
+      formatEnrollmentSummary(response, "Enrollment created."),
+      response.enrolled?.length === 0,
     );
     event.currentTarget.reset();
     enrollmentState.selectedStudent = null;
@@ -414,7 +446,11 @@ async function submitNewEnrollment(event) {
     });
 
     showToast(
-      `Student ${response.enrollment.student} created. ${response.enrolled.length} course(s) enrolled.`,
+      formatEnrollmentSummary(
+        response,
+        `Student ${response.enrollment.student} created.`,
+      ),
+      response.enrolled?.length === 0,
     );
     event.currentTarget.reset();
     clearFieldErrors(newPart);
