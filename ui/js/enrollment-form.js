@@ -396,7 +396,7 @@ function bindEditDialog() {
     const options = enrollmentState.programs
       .map(
         (program) =>
-          `<option value="${escapeHtml(program._id)}"${String(program._id) === String(selectedProgramId) ? " selected" : ""}>${escapeHtml(program.name)} · ${escapeHtml(program.major)}</option>`,
+          `<option value="${escapeHtml(program._id)}"${String(program._id) === String(selectedProgramId) ? " selected" : ""}>${escapeHtml(program.name)}</option>`,
       )
       .join("");
     select.innerHTML = `<option value="">Select program</option>${options}`;

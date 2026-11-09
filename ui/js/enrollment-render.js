@@ -6,7 +6,7 @@ export function renderPrograms() {
   const options = enrollmentState.programs
     .map(
       (program) =>
-        `<option value="${escapeHtml(program._id)}">${escapeHtml(program.name)} · ${escapeHtml(program.major)}</option>`,
+        `<option value="${escapeHtml(program._id)}">${escapeHtml(program.name)}</option>`,
     )
     .join("");
 
