@@ -76,21 +76,6 @@ export function renderCourses() {
   if (count) count.textContent = `${courses.length} course${courses.length === 1 ? "" : "s"} shown`;
 }
 
-// Populate the student filter with the currently loaded courses.
-export function renderCourseOptions() {
-  const select = document.querySelector("#student-course");
-  if (!select) return;
-  select.innerHTML = `
-    <option value="">All students</option>
-    ${state.courses
-      .map(
-        (course) =>
-          `<option value="${escapeHtml(course._id)}">${escapeHtml(course.code)} · ${escapeHtml(course.name)}</option>`,
-      )
-      .join("")}
-  `;
-}
-
 // Open the course dialog in create or edit mode.
 export function openCourseDialog(course = null) {
   const dialog = document.querySelector("#course-dialog");
@@ -158,7 +143,6 @@ export async function loadCourses(handleLoadError) {
   state.courses = response.courses || [];
   state.courseTotal = response.total || 0;
   renderCourses();
-  renderCourseOptions();
   renderPagination("#course-pagination", state.coursePage, state.courseTotal, (page) => {
     state.coursePage = page;
     loadCourses(handleLoadError).catch(handleLoadError);

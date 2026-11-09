@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Student from "../models/student_model.js";
 import Enrollment from "../models/enrollment_model.js"
 import Block from "../models/block_model.js";
@@ -34,26 +35,73 @@ export async function createStudent(req, res) {
 //GET
 export async function getStudents(req, res) {
     try{
-        const filter = {}
+        const andClauses = []
+
+        if (req.query.student_id) {
+            const id = Number(req.query.student_id)
+            if (Number.isInteger(id)) {
+                andClauses.push({ _id: id })
+            }
+        }
+
+        if (req.query.program) {
+            if (!mongoose.isValidObjectId(req.query.program)) {
+                return res.status(400).json({error: "Invalid program id"})
+            }
+            const enrolledStudentIds = await Enrollment.distinct("student", {
+                program: req.query.program
+            })
+            andClauses.push({ _id: { $in: enrolledStudentIds } })
+        }
+
+        if (req.query.course) {
+            if (!mongoose.isValidObjectId(req.query.course)) {
+                return res.status(400).json({error: "Invalid course id"})
+            }
+            const enrolledStudentIds = await CourseEnrollment.distinct("student", {
+                course: req.query.course
+            })
+            andClauses.push({ _id: { $in: enrolledStudentIds } })
+        }
+
         if (req.query.search) {
             const search = String(req.query.search).trim()
             const safe = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
             const expression = new RegExp(safe, "i")
-            filter.$or = [
+            const searchOr = [
                 { first_name: expression },
                 { last_name: expression },
+                { middle_name: expression },
+                {
+                    $expr: {
+                        $regexMatch: {
+                            input: {
+                                $concat: [
+                                    { $ifNull: ["$first_name", ""] },
+                                    " ",
+                                    { $ifNull: ["$last_name", ""] }
+                                ]
+                            },
+                            regex: safe,
+                            options: "i"
+                        }
+                    }
+                }
             ]
 
             const studentId = Number(search)
             if (Number.isInteger(studentId)) {
-                filter.$or.push({ _id: studentId })
+                searchOr.push({ _id: studentId })
             }
+            andClauses.push({ $or: searchOr })
         }
-        if(req.query.last_name){
-            // Yeah that's regex, basically filters the special sybols, if someone decided to put a "*" it'll match everything, ts filters that
+
+        if (req.query.last_name){
             const safe = String(req.query.last_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-            filter.last_name = new RegExp("^" + safe, "i")
+            andClauses.push({ last_name: new RegExp("^" + safe, "i") })
         }
+
+        const filter = andClauses.length > 0 ? { $and: andClauses } : {}
         //Amount of things that get displayed, pagination
         const page = Math.max(parseInt(req.query.page) || 1, 1)
         const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)

@@ -56,7 +56,10 @@ function bindDashboardEvents(loadData) {
     loadStudents(handleLoadError).catch(handleLoadError);
   });
   document.querySelector("#course-program")?.addEventListener("change", renderCourses);
-  document.querySelector("#student-course")?.addEventListener("change", renderStudents);
+  document.querySelector("#student-program")?.addEventListener("change", () => {
+    state.studentPage = 1;
+    loadStudents(handleLoadError).catch(handleLoadError);
+  });
   document.querySelector("#add-course-btn")?.addEventListener("click", () => openCourseDialog());
   document.querySelector("#course-form")?.addEventListener("submit", (event) => {
     createOrUpdateCourse(event, loadData);

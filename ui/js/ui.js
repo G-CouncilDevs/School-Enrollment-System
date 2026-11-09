@@ -85,10 +85,11 @@ export function renderPrograms() {
     select.value = selected;
   });
 
-  const courseProgram = document.querySelector("#course-program");
-  if (courseProgram) {
-    const selected = courseProgram.value;
-    courseProgram.innerHTML = `
+  for (const selector of ["#course-program", "#student-program"]) {
+    const select = document.querySelector(selector);
+    if (!select) continue;
+    const selected = select.value;
+    select.innerHTML = `
       <option value="">All programs</option>
       ${state.programs
         .map(
@@ -97,7 +98,7 @@ export function renderPrograms() {
         )
         .join("")}
     `;
-    courseProgram.value = selected;
+    select.value = selected;
   }
 }
 

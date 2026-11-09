@@ -13,30 +13,26 @@ export function renderStudents() {
   const list = document.querySelector("#student-list");
   if (!list) return;
 
-  const selectedCourse = document.querySelector("#student-course")?.value || "";
-  const students = state.students.filter((student) => {
-    if (!selectedCourse) return true;
-    return state.blocks.some(
-      (block) =>
-        block.students?.some((id) => String(id) === String(student._id)) &&
-        block.courses?.some((entry) =>
-          courseEntryMatchesId(entry, selectedCourse),
-        ),
-    );
-  });
+  const students = state.students;
 
   list.innerHTML = students.length
     ? students
         .map(
-          (student) => `
-            <li>
-              <div>
-                <strong>${escapeHtml(student.first_name)} ${escapeHtml(student.middle_name)} ${escapeHtml(student.last_name)}</strong>
-                <span class="sub">ID: ${escapeHtml(student._id)}</span>
-              </div>
-              <button type="button" class="btn light small" data-student-edit="${escapeHtml(student._id)}">Edit</button>
-            </li>
-          `,
+          (student) => {
+            const fullName = [student.first_name, student.middle_name, student.last_name]
+              .filter(Boolean)
+              .join(" ");
+
+            return `
+              <li>
+                <div>
+                  <strong>${escapeHtml(fullName)}</strong>
+                  <span class="sub">ID: ${escapeHtml(student._id)}</span>
+                </div>
+                <button type="button" class="btn light small" data-student-edit="${escapeHtml(student._id)}">Edit</button>
+              </li>
+            `;
+          },
         )
         .join("")
     : '<li class="empty">No students found.</li>';
@@ -68,13 +64,16 @@ export function openStudentDialog(student) {
 
 export async function loadStudents(handleLoadError) {
   const input = document.querySelector("#student-search");
+  const programSelect = document.querySelector("#student-program");
   const search = input?.value.trim() || "";
+  const programId = programSelect?.value || "";
+
   const params = new URLSearchParams({
     page: String(state.studentPage),
     limit: String(PAGE_SIZE),
   });
-  if (/^\d+$/.test(search)) params.set("student_id", search);
-  else if (search) params.set("last_name", search);
+  if (search) params.set("search", search);
+  if (programId) params.set("program", programId);
 
   setLoading("#student-list", "Loading students…");
   const response = await requestJson(`/students?${params}`);
