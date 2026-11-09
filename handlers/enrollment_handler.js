@@ -9,6 +9,7 @@ import Course from "../models/course_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
 import { claimSeat } from "../helper/seat_helper.js";
+import { nextStudentID } from "../models/studentID_generator.js";
  
 const isId = (value) => mongoose.isValidObjectId(String(value))
 
@@ -26,24 +27,53 @@ const isId = (value) => mongoose.isValidObjectId(String(value))
 export async function createEnrollment(req, res) {
     const session = await mongoose.startSession()
     try{
-        const student = Number(req.body.student)
-        if (!Number.isInteger(student) || student <= 0) {
-            return res.status(400).json({error: "student must be a student id number"})
+        const approvedBy = req.session.employeeId
+        const newStudent = req.body.student === undefined
+        let student = newStudent ? null : Number(req.body.student)
+        let studentData
+
+        if (newStudent) {
+            studentData = {
+                _id: await nextStudentID(),
+                first_name: req.body.first_name,
+                middle_name: req.body.middle_name,
+                last_name: req.body.last_name,
+                sex: req.body.sex,
+                birth_date: req.body.birth_date,
+                address: req.body.address,
+            }
         }
-        for (const field of ["approved_by", "program", "semester", "block"]) {
+
+        if (!Number.isInteger(student) || student <= 0) {
+            if (!newStudent) {
+                return res.status(400).json({error: "student must be a student id number"})
+            }
+        }
+        if (!isId(approvedBy)) {
+            return res.status(401).json({error: "Authentication required"})
+        }
+        for (const field of ["program", "semester", "block"]) {
             if (!isId(req.body[field])) {
                 return res.status(400).json({error: `Invalid ${field} id`})
             }
         }
+        if (req.body.courses !== undefined) {
+            if (!Array.isArray(req.body.courses) || req.body.courses.length === 0) {
+                return res.status(400).json({error: "Select at least one course"})
+            }
+            if (req.body.courses.some((courseId) => !isId(courseId))) {
+                return res.status(400).json({error: "Invalid course id"})
+            }
+        }
  
         const [studentExists, employeeExists, programExists, semester, block] = await Promise.all([
-            Student.exists({ _id: student }),
-            Employee.exists({ _id: req.body.approved_by }),
+            newStudent ? false : Student.exists({ _id: student }),
+            Employee.exists({ _id: approvedBy }),
             Program.exists({ _id: req.body.program }),
             Semester.findById(req.body.semester),
             Block.findById(req.body.block)
         ])
-        if (!studentExists)  return res.status(400).json({error: "Student does not exist"})
+        if (!newStudent && !studentExists) return res.status(400).json({error: "Student does not exist"})
         if (!employeeExists) return res.status(400).json({error: "Approving employee does not exist"})
         if (!programExists)  return res.status(400).json({error: "Program does not exist"})
         if (!semester)       return res.status(400).json({error: "Semester does not exist"})
@@ -52,8 +82,22 @@ export async function createEnrollment(req, res) {
             return res.status(400).json({error: "That block is not in this semester"})
         }
  
-        // Work out which of the block's courses the student can take
-        const courses = await Course.find({ _id: { $in: block.courses.map(c => c.course) } })
+        // Work out which courses the student can take
+        const blockCourseIds = new Set(block.courses.map(({ course }) => String(course)))
+        const selectedCourseIds = Array.isArray(req.body.courses)
+            ? [...new Set(req.body.courses.map(String))]
+            : [...blockCourseIds]
+
+        if (selectedCourseIds.length === 0) {
+            return res.status(400).json({error: "Select at least one course"})
+        }
+
+        const offeringCourseIds = new Set(semester.offerings.map(o => String(o.course)))
+        if (selectedCourseIds.some((courseId) => !offeringCourseIds.has(courseId))) {
+            return res.status(400).json({error: "Selected course is not offered in this semester"})
+        }
+
+        const courses = await Course.find({ _id: { $in: selectedCourseIds } })
             .populate({ path: "prerequisites", select: "code name" })
         const passed = new Set(
             (await CourseRecord.distinct("course", { student, status: "passed" })).map(String)
@@ -89,9 +133,14 @@ export async function createEnrollment(req, res) {
         // Create the enrollment and claim a seat for each eligible course, all or nothing
         let result = null
         await session.withTransaction(async () => {
+            if (newStudent) {
+                const [createdStudent] = await Student.create([studentData], { session })
+                student = createdStudent._id
+            }
+
             const [created] = await Enrollment.create([{
                 student,
-                approved_by:   req.body.approved_by,
+                approved_by:   approvedBy,
                 program:       req.body.program,
                 semester:      req.body.semester,
                 block:         req.body.block,
@@ -106,7 +155,7 @@ export async function createEnrollment(req, res) {
                     enrollment: created,
                     courseId:   course._id,
                     blockId:    block._id,
-                    source:     "block",
+                    source:     blockCourseIds.has(String(course._id)) ? "block" : "prerequisite",
                     capacity,
                     session
                 })
@@ -161,13 +210,39 @@ export async function getEnrollments(req, res) {
  
         const [enrollments, total] = await Promise.all([
             Enrollment.find(filter)
+                .populate({ path: "student", select: "first_name middle_name last_name" })
+                .populate({ path: "program", select: "name major" })
+                .populate({ path: "semester", select: "semester_term academic_year" })
+                .populate({ path: "block", select: "section_name" })
                 .sort({ _id: -1 })                
                 .skip((page - 1) * limit)
                 .limit(limit),
             Enrollment.countDocuments(filter)
         ])
- 
-        res.status(200).json({ page, limit, total, enrollments })
+
+        const courses = await CourseEnrollment.find({
+            enrollment: { $in: enrollments.map((enrollment) => enrollment._id) },
+        })
+            .select("enrollment course")
+            .populate({ path: "course", select: "code name" })
+
+        const coursesByEnrollment = new Map()
+        for (const courseEnrollment of courses) {
+            const key = String(courseEnrollment.enrollment)
+            const list = coursesByEnrollment.get(key) || []
+            if (courseEnrollment.course) list.push(courseEnrollment.course)
+            coursesByEnrollment.set(key, list)
+        }
+
+        res.status(200).json({
+            page,
+            limit,
+            total,
+            enrollments: enrollments.map((enrollment) => ({
+                ...enrollment.toObject(),
+                courses: coursesByEnrollment.get(String(enrollment._id)) || [],
+            })),
+        })
     }
     catch(err){
         res.status(500).json({error:err.message})

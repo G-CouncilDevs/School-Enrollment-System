@@ -9,7 +9,7 @@ export function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-export function showToast(message, isError = false) {
+export function showToast(message, isError = false, duration = 5000) {
   const toast = document.querySelector("#toast");
   if (!toast) return;
   toast.textContent = message;
@@ -18,7 +18,7 @@ export function showToast(message, isError = false) {
   window.clearTimeout(showToast.timeout);
   showToast.timeout = window.setTimeout(() => {
     toast.hidden = true;
-  }, 4000);
+  }, duration);
 }
 
 export function setLoading(selector, message) {

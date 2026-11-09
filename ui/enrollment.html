@@ -134,10 +134,6 @@
 
           <div class="details-head">
             <h3>Student details</h3>
-            <div class="row">
-              <button type="button" class="btn light small" id="edit-details" disabled>Edit details</button>
-              <button type="button" class="btn light small danger-text" id="delete-student" disabled>Delete student</button>
-            </div>
           </div>
           <div class="grid">
             <label>Student ID <input type="text" name="student_id" disabled></label>
@@ -161,7 +157,7 @@
             <label>Province <input type="text" name="province" maxlength="60" disabled></label>
           </div>
             <label>Year level
-              <select name="standing_year" disabled required>
+              <select name="standing_year" required>
                 <option value="">Select year level</option>
                 <option value="1">1st year</option>
                 <option value="2">2nd year</option>
@@ -171,13 +167,13 @@
               <span class="field-error" data-error-for="standing_year"></span>
             </label>
             <label>Program
-              <select name="program" disabled required data-programs>
+              <select name="program" required data-programs>
                 <option value="">Select program</option>
               </select>
               <span class="field-error" data-error-for="program"></span>
             </label>
             <label>Major
-              <select name="major" disabled required data-majors>
+              <select name="major" required data-majors>
                 <option value="">Select a program first</option>
               </select>
               <span class="field-error" data-error-for="major"></span>
@@ -220,7 +216,7 @@
     <!-- This term's enrollments -->
     <section class="panel">
       <h2>Enrolled This Term <span class="sub" id="table-term"></span></h2>
-      <p class="sub">Students you enroll show up here. Click Edit to change an enrollment, or a student's name to edit or delete the student.</p>
+      <p class="sub">Students you enroll show up here.</p>
 
       <div class="table-wrap">
         <table>
@@ -250,84 +246,6 @@
         <div class="modal-buttons">
           <button type="button" class="btn light" data-close>Cancel</button>
           <button type="submit" class="btn danger">Remove</button>
-        </div>
-      </form>
-    </div>
-  </dialog>
-
-
-
-  <!-- Edit student popup (same fields as the enrollment page). script.js fills it in. -->
-  <dialog class="modal wide" id="student-dialog">
-    <div class="modal-box">
-      <h2 id="student-dialog-title">Edit Student</h2>
-      <form id="student-form" novalidate>
-        <div class="grid">
-          <label>Student ID <input type="text" name="student_id" disabled></label>
-          <label>First name <input type="text" name="first_name" required maxlength="60">
-            <span class="field-error" data-error-for="first_name"></span></label>
-          <label>Middle name (optional) <input type="text" name="middle_name" maxlength="60"></label>
-          <label>Last name <input type="text" name="last_name" required maxlength="60">
-            <span class="field-error" data-error-for="last_name"></span></label>
-          <label>Sex
-            <select name="sex">
-              <option value="">Select sex</option>
-              <option>Male</option>
-              <option>Female</option>
-            </select>
-          </label>
-          <label>Birthdate <input type="date" name="birth_date">
-            <span class="field-error" data-error-for="birth_date"></span></label>
-          <div class="address-row span-all">
-            <label>Street <input type="text" name="street" placeholder="e.g. 12 Rizal St" maxlength="100"></label>
-            <label>Barangay <input type="text" name="barangay" maxlength="60"></label>
-            <label>City / Municipality <input type="text" name="city" maxlength="60"></label>
-            <label>Province <input type="text" name="province" maxlength="60"></label>
-          </div>
-          <label>Year level
-            <select name="standing_year">
-              <option value="">Select year level</option>
-              <option value="1">1st year</option>
-              <option value="2">2nd year</option>
-              <option value="3">3rd year</option>
-              <option value="4">4th year</option>
-            </select>
-            <span class="field-error" data-error-for="standing_year"></span>
-          </label>
-          <label>Program
-            <select name="program" data-programs>
-              <option value="">Select program</option>
-            </select>
-            <span class="field-error" data-error-for="program"></span>
-          </label>
-          <label>Major
-            <select name="major" data-majors>
-              <option value="">Select a program first</option>
-            </select>
-            <span class="field-error" data-error-for="major"></span>
-          </label>
-        </div>
-        <p class="sub" id="student-enroll-note"></p>
-
-        <div class="modal-buttons spread">
-          <button type="button" class="btn light danger-text" id="student-delete-btn">Delete student</button>
-          <div class="row">
-            <button type="button" class="btn light" data-close>Cancel</button>
-            <button type="submit" class="btn" id="student-submit">Save Changes</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </dialog>
-
-  <dialog class="modal" id="student-delete-dialog">
-    <div class="modal-box">
-      <h2>Delete student?</h2>
-      <form id="student-delete-form">
-        <p>You're about to delete <strong id="student-delete-name">this student</strong><span id="student-delete-extra"></span>. This can't be undone.</p>
-        <div class="modal-buttons">
-          <button type="button" class="btn light" data-close>Cancel</button>
-          <button type="submit" class="btn danger">Delete</button>
         </div>
       </form>
     </div>

@@ -260,6 +260,7 @@ td { padding: 14px 8px; border-top: 1px solid var(--line); }
   background: #15803d;
   border-radius: 10px;
   box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.35);
+  white-space: pre-line;
 }
 .toast.error { background: var(--red); }
 
