@@ -114,6 +114,17 @@ function renderPrograms() {
   });
 }
 
+// Update major select with the selected program's major.
+function renderProgramMajor(programId, select) {
+  if (!select) return;
+  const program = enrollmentState.programs.find(
+    (candidate) => String(candidate._id) === String(programId),
+  );
+  select.innerHTML = program?.major
+    ? `<option value="${escapeHtml(program.major)}">${escapeHtml(program.major)}</option>`
+    : '<option value="">No major listed</option>';
+}
+
 // Fill academic-year dropdown with years from available semesters.
 function renderAcademicYears() {
   const years = [...new Set(
@@ -309,7 +320,7 @@ async function loadEnrollments() {
 }
 
 // Store selected student and copy its details into the existing-student form.
-function fillSelectedStudent(student) {
+async function fillSelectedStudent(student) {
   enrollmentState.selectedStudent = student;
   const existingPart = document.querySelector("#existing-part");
   if (!existingPart) return;
@@ -332,6 +343,29 @@ function fillSelectedStudent(student) {
   for (const [name, value] of Object.entries(fields)) {
     const field = existingPart.querySelector(`[name="${name}"]`);
     if (field) field.value = value || "";
+  }
+
+  // Pre-fill program and standing year from previous enrollment if available
+  try {
+    const response = await requestJson(
+      `/enrollments?student=${encodeURIComponent(student._id)}&page=1&limit=1`,
+    );
+    const latest = response.enrollments?.[0];
+    if (latest) {
+      const programSelect = existingPart.querySelector('[name="program"]');
+      const yearSelect = existingPart.querySelector('[name="standing_year"]');
+      const majorSelect = existingPart.querySelector('[name="major"]');
+      const programId = String(latest.program?._id || latest.program || "");
+      if (programSelect && programId) {
+        programSelect.value = programId;
+        if (majorSelect) renderProgramMajor(programId, majorSelect);
+      }
+      if (yearSelect && latest.standing_year) {
+        yearSelect.value = String(latest.standing_year);
+      }
+    }
+  } catch {
+    // Non-fatal if student has no prior enrollments
   }
 
   const results = document.querySelector("#find-results");
@@ -370,7 +404,11 @@ function bindStudentSearch() {
     const student = enrollmentState.students.find(
       (candidate) => String(candidate._id) === button.dataset.studentId,
     );
-    if (student) fillSelectedStudent(student);
+    if (student) {
+      fillSelectedStudent(student).catch((error) => {
+        console.error("Failed to fill student details:", error);
+      });
+    }
   });
 }
 
@@ -525,6 +563,13 @@ function bindEnrollmentEvents() {
   });
   document.querySelectorAll("[data-sections]").forEach((select) => {
     select.addEventListener("change", selectBlock);
+  });
+  document.querySelectorAll("[data-programs]").forEach((select) => {
+    select.addEventListener("change", (event) => {
+      const container = event.target.closest("#new-part, #existing-part, #student-dialog");
+      const majorSelect = container?.querySelector("[data-majors]");
+      renderProgramMajor(event.target.value, majorSelect);
+    });
   });
   bindStudentSearch();
 }
