@@ -123,6 +123,54 @@ function renderStudentResults(students) {
       .join("");
   }
 
+  // Render enrollments for the selected semester.
+  function renderEnrollments() {
+    const rows = document.querySelector("#enrollment-rows");
+    if (!rows) return;
+
+    if (enrollmentState.enrollments.length === 0) {
+      rows.innerHTML = '<tr><td colspan="6" class="empty">No enrollments yet.</td></tr>';
+      return;
+    }
+
+    rows.innerHTML = enrollmentState.enrollments
+      .map((enrollment) => {
+        const student = enrollment.student || {};
+        const name = [student.first_name, student.middle_name, student.last_name]
+          .filter(Boolean)
+          .join(" ");
+        const courses = enrollment.courses?.map((course) => course.code).join(", ");
+
+        return `
+          <tr>
+            <td>${escapeHtml(student._id || enrollment.student)}</td>
+            <td>${escapeHtml(name || "Unknown student")}</td>
+            <td>${escapeHtml(enrollment.standing_year || "—")}</td>
+            <td>${escapeHtml(enrollment.block?.section_name || "—")}</td>
+            <td>${escapeHtml(courses || "No courses")}</td>
+            <td><button type="button" class="btn light small" disabled>Edit</button></td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  // Load enrollments for the currently selected semester.
+  async function loadEnrollments() {
+    const semester = enrollmentState.selectedSemester;
+    if (!semester) {
+      enrollmentState.enrollments = [];
+      renderEnrollments();
+      return;
+    }
+
+    const response = await requestJson(
+      `/enrollments?semester=${encodeURIComponent(semester._id)}&page=1&limit=100`,
+    );
+    enrollmentState.enrollments = response.enrollments || [];
+    renderEnrollments();
+  }
+
   results.hidden = false;
 }
 
@@ -226,6 +274,7 @@ async function submitExistingEnrollment(event) {
     event.currentTarget.reset();
     enrollmentState.selectedStudent = null;
     enrollmentState.selectedBlock = null;
+    await loadEnrollments();
   } catch (error) {
     showToast(error.message, true);
   }
@@ -274,6 +323,7 @@ async function submitNewEnrollment(event) {
     );
     event.currentTarget.reset();
     enrollmentState.selectedBlock = null;
+    await loadEnrollments();
   } catch (error) {
     showToast(error.message, true);
   }
@@ -291,8 +341,14 @@ function bindEnrollmentEvents() {
       }
     },
   );
-  document.querySelector("#enroll-term")?.addEventListener("change", renderBlocks);
-  document.querySelector("#enroll-year")?.addEventListener("change", renderBlocks);
+  document.querySelector("#enroll-term")?.addEventListener("change", async () => {
+    renderBlocks();
+    await loadEnrollments();
+  });
+  document.querySelector("#enroll-year")?.addEventListener("change", async () => {
+    renderBlocks();
+    await loadEnrollments();
+  });
   document.querySelectorAll("[data-sections]").forEach((select) => {
     select.addEventListener("change", selectBlock);
   });
@@ -319,5 +375,6 @@ export async function initializeEnrollment() {
   renderAcademicYears();
   renderBlocks();
   bindEnrollmentEvents();
+  await loadEnrollments();
   return enrollmentState;
 }

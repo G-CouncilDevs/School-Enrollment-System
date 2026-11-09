@@ -188,13 +188,39 @@ export async function getEnrollments(req, res) {
  
         const [enrollments, total] = await Promise.all([
             Enrollment.find(filter)
+                .populate({ path: "student", select: "first_name middle_name last_name" })
+                .populate({ path: "program", select: "name major" })
+                .populate({ path: "semester", select: "semester_term academic_year" })
+                .populate({ path: "block", select: "section_name" })
                 .sort({ _id: -1 })                
                 .skip((page - 1) * limit)
                 .limit(limit),
             Enrollment.countDocuments(filter)
         ])
- 
-        res.status(200).json({ page, limit, total, enrollments })
+
+        const courses = await CourseEnrollment.find({
+            enrollment: { $in: enrollments.map((enrollment) => enrollment._id) },
+        })
+            .select("enrollment course")
+            .populate({ path: "course", select: "code name" })
+
+        const coursesByEnrollment = new Map()
+        for (const courseEnrollment of courses) {
+            const key = String(courseEnrollment.enrollment)
+            const list = coursesByEnrollment.get(key) || []
+            if (courseEnrollment.course) list.push(courseEnrollment.course)
+            coursesByEnrollment.set(key, list)
+        }
+
+        res.status(200).json({
+            page,
+            limit,
+            total,
+            enrollments: enrollments.map((enrollment) => ({
+                ...enrollment.toObject(),
+                courses: coursesByEnrollment.get(String(enrollment._id)) || [],
+            })),
+        })
     }
     catch(err){
         res.status(500).json({error:err.message})
