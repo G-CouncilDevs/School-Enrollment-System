@@ -54,7 +54,8 @@ async function runTests() {
     console.log("\n== CREATE ==")
  
     const created = await call(createEmployee, { body: {
-        first_name: "Maria", middle_name: "Reyes", last_name: "TEST-Santos"
+        first_name: "Maria", middle_name: "Reyes", last_name: "TEST-Santos",
+        email: "test.maria.santos@example.com", password: "TestPass123!"
     }})
     expectStatus("Create employee -> 201", created, 201)
     if (created.statusCode !== 201) {
@@ -73,7 +74,7 @@ async function runTests() {
     expectStatus("Create without last_name -> 400",
         await call(createEmployee, { body: { first_name: "TEST-NoLastName" } }), 400)
  
-    const noMiddle = await call(createEmployee, { body: { first_name: "Pedro", last_name: "TEST-NoMiddle" } })
+    const noMiddle = await call(createEmployee, { body: { first_name: "Pedro", last_name: "TEST-NoMiddle", email: "test.pedro.nomiddle@example.com", password: "TestPass123!" } })
     expectStatus("Create without middle_name (optional) -> 201", noMiddle, 201)
     if (noMiddle.statusCode === 201) leftovers.employees.push(String(noMiddle.body._id))
  

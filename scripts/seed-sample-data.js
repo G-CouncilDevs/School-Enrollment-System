@@ -128,6 +128,7 @@ try {
     semester: semester1._id,
     program: bscs._id,
     major: "Software Engineering",
+    year_level: 1,
     section_name: "BSCS-1A",
     courses: [
       { course: cs101._id, schedule: "MWF 9:00-10:00", room: "CL-1" },
@@ -142,6 +143,7 @@ try {
     semester: semester1._id,
     program: bsit._id,
     major: "Network Administration",
+    year_level: 1,
     section_name: "BSIT-1A",
     courses: [
       { course: cs101._id, schedule: "MWF 10:00-11:00", room: "CL-3" },
@@ -154,6 +156,7 @@ try {
     semester: semester2._id,
     program: bscs._id,
     major: "Software Engineering",
+    year_level: 2,
     section_name: "BSCS-2A",
     courses: [
       { course: cs102._id, schedule: "MWF 9:00-10:00", room: "CL-1" },
@@ -166,6 +169,7 @@ try {
     semester: semester2._id,
     program: bsit._id,
     major: "Network Administration",
+    year_level: 2,
     section_name: "BSIT-2A",
     courses: [
       { course: eng101._id, schedule: "MWF 13:00-14:00", room: "RM-102" },

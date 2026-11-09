@@ -4,6 +4,7 @@ const blockSchema = new mongoose.Schema({
     semester:       {type: mongoose.Schema.Types.ObjectId, ref: "Semester", required: true},
     program:        {type: mongoose.Schema.Types.ObjectId, ref: "Program"},
     major:          {type: String},
+    year_level:     {type: Number},
     section_name:   {type: String, required: true},
     courses:    [{
         _id:false,

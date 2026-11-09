@@ -160,7 +160,18 @@ function getSelectedSemester() {
   );
 }
 
-// Fill section dropdowns with blocks belonging to the selected semester, program, and major.
+// Determine the year level (1-4) of a section from its year_level field or section_name.
+export function getBlockYearLevel(block) {
+  if (block?.year_level) return Number(block.year_level);
+  const s = String(block?.section_name || block || "");
+  const m =
+    s.match(/(\d+)(?:st|nd|rd|th)?[-_ ]*(?:year|yr)?[-_ ]*[A-Za-z]/i) ||
+    s.match(/[-_ ]?([1-4])[A-Za-z]/i) ||
+    s.match(/([1-4])/);
+  return m ? Number(m[1]) : null;
+}
+
+// Fill section dropdowns with blocks belonging to the selected semester, program, major, and year level.
 function renderBlocks(container = null) {
   const semester = getSelectedSemester();
   enrollmentState.selectedSemester = semester || null;
@@ -171,13 +182,24 @@ function renderBlocks(container = null) {
 
   targets.forEach((select) => {
     const parent = select.closest("#new-part, #existing-part") || document;
+    const isNew = parent.id === "new-part" || Boolean(parent.closest("#new-part"));
     const programId = parent.querySelector?.('[name="program"]')?.value;
     const major = parent.querySelector?.('[name="major"]')?.value;
+    const yearSelect = parent.querySelector?.('[name="standing_year"]');
+    const standingYear = isNew ? 1 : (yearSelect?.value ? Number(yearSelect.value) : null);
 
     const matchingBlocks = enrollmentState.blocks.filter((block) => {
       const matchesSemester =
         String(block.semester?._id || block.semester) === String(semester?._id);
       if (!matchesSemester) return false;
+
+      // Filter by standing year (1st, 2nd, 3rd, 4th year)
+      if (standingYear) {
+        const blockYear = getBlockYearLevel(block);
+        if (blockYear && blockYear !== standingYear) {
+          return false;
+        }
+      }
 
       // Filter by program if program is selected
       if (programId) {
@@ -212,8 +234,14 @@ function renderBlocks(container = null) {
     let placeholder = "Select section";
     if (!semester) placeholder = "Select term first";
     else if (!programId) placeholder = "Select program first";
-    else if (matchingBlocks.length === 0) placeholder = "No sections available";
+    else if (!isNew && !standingYear) placeholder = "Select year level first";
+    else if (matchingBlocks.length === 0) {
+      placeholder = standingYear
+        ? `No sections available for Year ${standingYear}`
+        : "No sections available";
+    }
 
+    const prevValue = select.value;
     const options = matchingBlocks
       .map(
         (block) =>
@@ -222,6 +250,17 @@ function renderBlocks(container = null) {
       .join("");
 
     select.innerHTML = `<option value="">${placeholder}</option>${options}`;
+    if (matchingBlocks.some((b) => String(b._id) === String(prevValue))) {
+      select.value = prevValue;
+    } else {
+      select.value = "";
+      if (
+        enrollmentState.selectedBlock &&
+        String(enrollmentState.selectedBlock._id) === String(prevValue)
+      ) {
+        enrollmentState.selectedBlock = null;
+      }
+    }
   });
 
   renderBlockCourses();
@@ -784,6 +823,12 @@ function bindEnrollmentEvents() {
     });
   });
   document.querySelectorAll("[data-majors]").forEach((select) => {
+    select.addEventListener("change", (event) => {
+      const container = event.target.closest("#new-part, #existing-part");
+      renderBlocks(container);
+    });
+  });
+  document.querySelectorAll('[name="standing_year"]').forEach((select) => {
     select.addEventListener("change", (event) => {
       const container = event.target.closest("#new-part, #existing-part");
       renderBlocks(container);

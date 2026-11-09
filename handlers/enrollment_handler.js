@@ -10,6 +10,7 @@ import CourseEnrollment from "../models/course_enrollment_model.js";
 import CourseRecord from "../models/course_record_model.js";
 import { claimSeat } from "../helper/seat_helper.js";
 import { nextStudentID } from "../models/studentID_generator.js";
+import { getBlockYearLevel } from "../helper/year_helper.js";
  
 const isId = (value) => mongoose.isValidObjectId(String(value))
 
@@ -27,7 +28,7 @@ const isId = (value) => mongoose.isValidObjectId(String(value))
 export async function createEnrollment(req, res) {
     const session = await mongoose.startSession()
     try{
-        const approvedBy = req.session.employeeId
+        const approvedBy = req.session?.employeeId
         const newStudent = req.body.student === undefined
         let student = newStudent ? null : Number(req.body.student)
         let studentData
@@ -80,6 +81,18 @@ export async function createEnrollment(req, res) {
         if (!block)          return res.status(400).json({error: "Block does not exist"})
         if (String(block.semester) !== String(semester._id)) {
             return res.status(400).json({error: "That block is not in this semester"})
+        }
+
+        const standingYear = newStudent ? 1 : Number(req.body.standing_year)
+        if (!newStudent && (!Number.isInteger(standingYear) || standingYear < 1 || standingYear > 4)) {
+            return res.status(400).json({error: "standing_year must be a number between 1 and 4"})
+        }
+
+        const blockYear = block.year_level || getBlockYearLevel(block.section_name)
+        if (blockYear && standingYear && blockYear !== standingYear) {
+            return res.status(400).json({
+                error: `Cannot enroll a Year ${standingYear} student into a Year ${blockYear} section (${block.section_name})`
+            })
         }
  
         // Work out which courses the student can take
@@ -286,7 +299,20 @@ export async function updateEnrollment(req, res) {
  
         const changes = {}
  
-        if (req.body.standing_year !== undefined) changes.standing_year = req.body.standing_year
+        if (req.body.standing_year !== undefined) {
+            const yr = Number(req.body.standing_year)
+            if (!Number.isInteger(yr) || yr < 1 || yr > 4) {
+                return res.status(400).json({error: "standing_year must be between 1 and 4"})
+            }
+            const block = await Block.findById(enrollment.block)
+            const blockYear = block?.year_level || getBlockYearLevel(block?.section_name)
+            if (blockYear && blockYear !== yr) {
+                return res.status(400).json({
+                    error: `Cannot change standing year to Year ${yr} for an enrollment in Year ${blockYear} section (${block?.section_name})`
+                })
+            }
+            changes.standing_year = yr
+        }
  
         if (req.body.approved_by !== undefined) {
             if (!isId(req.body.approved_by)) {

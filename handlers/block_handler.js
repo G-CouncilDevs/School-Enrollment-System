@@ -6,16 +6,22 @@ import Employee from "../models/employee_model.js";
 import Student from "../models/student_model.js";
 import Enrollment from "../models/enrollment_model.js";
 import CourseEnrollment from "../models/course_enrollment_model.js";
+import { getBlockYearLevel } from "../helper/year_helper.js";
 
 const isId = (value) => mongoose.isValidObjectId(String(value))
 
 //POST
 export async function createBlock(req, res) {
     try{
+        const year_level = req.body.year_level !== undefined
+            ? Number(req.body.year_level)
+            : getBlockYearLevel(req.body.section_name)
+
         const newBlock = new Block({
             semester:       req.body.semester,
             program:        req.body.program,
             major:          req.body.major,
+            year_level:     year_level || undefined,
             section_name:   req.body.section_name,
             courses:        req.body.courses,
             students:       req.body.students
@@ -51,6 +57,15 @@ export async function getBlocks(req, res) {
         if (req.query.major !== undefined) {
             filter.major = req.query.major
         }
+        if (req.query.year_level !== undefined) {
+            const yr = Number(req.query.year_level)
+            if (Number.isInteger(yr)) {
+                filter.$or = [
+                    { year_level: yr },
+                    { year_level: { $exists: false }, section_name: new RegExp(`[-_ ]?${yr}[A-Za-z]`, "i") }
+                ]
+            }
+        }
         if (req.query.section_name){
             const safe = String(req.query.section_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
             filter.section_name = new RegExp("^" + safe, "i")
@@ -76,7 +91,12 @@ export async function getBlocks(req, res) {
             },
             { path: "courses.employee", select: "first_name middle_name last_name" },
         ])
-        res.status(200).json({page, limit, total, blocks: populated})
+        const blocksWithYear = populated.map(b => {
+            const obj = b.toObject()
+            if (!obj.year_level) obj.year_level = getBlockYearLevel(obj.section_name)
+            return obj
+        })
+        res.status(200).json({page, limit, total, blocks: blocksWithYear})
     }
     catch(err){
         res.status(500).json({error:err.message})
@@ -101,7 +121,9 @@ export async function getBlock(req, res) {
             .populate({ path: "students",         select: "first_name middle_name last_name" })
         if (!block) return res.status(404).json({error: "Block not found"})
  
-        res.status(200).json(block)
+        const data = block.toObject()
+        if (!data.year_level) data.year_level = getBlockYearLevel(data.section_name)
+        res.status(200).json(data)
     }
     catch(err){
         res.status(500).json({error:err.message})
@@ -120,6 +142,13 @@ export async function updateBlock(req, res) {
         const changes = {}
  
         if (req.body.section_name !== undefined) changes.section_name = req.body.section_name
+        if (req.body.year_level !== undefined) {
+            const yr = Number(req.body.year_level)
+            if (!Number.isInteger(yr) || yr < 1 || yr > 4) {
+                return res.status(400).json({error: "year_level must be between 1 and 4"})
+            }
+            changes.year_level = yr
+        }
  
         // --- semester ---
         if (req.body.semester !== undefined) {

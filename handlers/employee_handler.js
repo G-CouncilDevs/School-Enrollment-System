@@ -2,18 +2,34 @@ import Employee from "../models/employee_model.js";
 import Enrollment from "../models/enrollment_model.js";
 import Block from "../models/block_model.js";
 import mongoose from "mongoose";
+import { hashPassword } from "../utils/password.js";
 
 export async function createEmployee(req, res) {
     try{
+        const { first_name, middle_name, last_name, email, password } = req.body
+
+        if (!email || !password) {
+            return res.status(400).json({ error: "email and password are required" })
+        }
+
+        const password_hash = await hashPassword(String(password))
+
         const newEmployee = new Employee({
-        first_name:     req.body.first_name,
-        middle_name:    req.body.middle_name,
-        last_name:      req.body.last_name
+            first_name,
+            middle_name,
+            last_name,
+            email:         String(email).trim().toLowerCase(),
+            password_hash
         })
         const saved = await newEmployee.save()
-        res.status(201).json(saved)
+        // Never return password_hash in the response
+        const { password_hash: _removed, ...safeEmployee } = saved.toObject()
+        res.status(201).json(safeEmployee)
     }
     catch (err){
+        if (err.code === 11000) {
+            return res.status(409).json({ error: "An employee with that email already exists" })
+        }
         res.status(400).json({error:err.message})
     }
 }

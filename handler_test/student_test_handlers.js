@@ -1,14 +1,14 @@
 import mongoose from "mongoose"
-import { connectToMongoDB, disconnectFromMongoDB } from "./DB.js"
+import { connectToMongoDB, disconnectFromMongoDB } from "../DB.js"
  
-import Student    from "./models/student_model.js"
-import Enrollment from "./models/enrollment_model.js"
-import Block      from "./models/block_model.js"
-import Counter    from "./models/studentID_generator.js"
+import Student    from "../models/student_model.js"
+import Enrollment from "../models/enrollment_model.js"
+import Block      from "../models/block_model.js"
+import Counter    from "../models/studentID_generator.js"
  
 import {
     createStudent, getStudents, getStudent, updateStudent, deleteStudent
-} from "./handlers/student_handler.js"
+} from "../handlers/student_handler.js"
  
 // Seconds to wait (so you can look at the student in Atlas) before the final delete
 const PAUSE_SECONDS = 10
