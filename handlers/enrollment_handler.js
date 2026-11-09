@@ -57,12 +57,13 @@ export async function createEnrollment(req, res) {
                 return res.status(400).json({error: `Invalid ${field} id`})
             }
         }
-        if (!Array.isArray(req.body.courses) || req.body.courses.length === 0) {
-            return res.status(400).json({error: "Select at least one course"})
-        }
-        const selectedCourseIds = [...new Set(req.body.courses.map(String))]
-        if (selectedCourseIds.some((courseId) => !isId(courseId))) {
-            return res.status(400).json({error: "Invalid course id"})
+        if (req.body.courses !== undefined) {
+            if (!Array.isArray(req.body.courses) || req.body.courses.length === 0) {
+                return res.status(400).json({error: "Select at least one course"})
+            }
+            if (req.body.courses.some((courseId) => !isId(courseId))) {
+                return res.status(400).json({error: "Invalid course id"})
+            }
         }
  
         const [studentExists, employeeExists, programExists, semester, block] = await Promise.all([
@@ -81,10 +82,19 @@ export async function createEnrollment(req, res) {
             return res.status(400).json({error: "That block is not in this semester"})
         }
  
-        // Work out which of the block's courses the student can take
+        // Work out which courses the student can take
         const blockCourseIds = new Set(block.courses.map(({ course }) => String(course)))
-        if (selectedCourseIds.some((courseId) => !blockCourseIds.has(courseId))) {
-            return res.status(400).json({error: "Selected course is not in this block"})
+        const selectedCourseIds = Array.isArray(req.body.courses)
+            ? [...new Set(req.body.courses.map(String))]
+            : [...blockCourseIds]
+
+        if (selectedCourseIds.length === 0) {
+            return res.status(400).json({error: "Select at least one course"})
+        }
+
+        const offeringCourseIds = new Set(semester.offerings.map(o => String(o.course)))
+        if (selectedCourseIds.some((courseId) => !offeringCourseIds.has(courseId))) {
+            return res.status(400).json({error: "Selected course is not offered in this semester"})
         }
 
         const courses = await Course.find({ _id: { $in: selectedCourseIds } })
@@ -145,7 +155,7 @@ export async function createEnrollment(req, res) {
                     enrollment: created,
                     courseId:   course._id,
                     blockId:    block._id,
-                    source:     "block",
+                    source:     blockCourseIds.has(String(course._id)) ? "block" : "prerequisite",
                     capacity,
                     session
                 })

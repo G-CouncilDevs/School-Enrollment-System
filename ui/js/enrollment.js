@@ -291,6 +291,102 @@ function renderBlockCourses() {
   document.querySelectorAll(".courses").forEach((container) => {
     container.innerHTML = markup;
   });
+
+  renderExtraCourseOptions();
+}
+
+// Populate the extra-course select with semester offerings not in the selected block.
+function renderExtraCourseOptions() {
+  const select = document.querySelector("#extra-course");
+  if (!select) return;
+
+  const blockCourseIds = new Set(
+    (enrollmentState.selectedBlock?.courses || []).map(({ course }) =>
+      String(course._id || course),
+    ),
+  );
+
+  const offerings = enrollmentState.selectedSemester?.offerings || [];
+  const extras = offerings
+    .filter((offering) => {
+      const courseId = String(offering.course?._id || offering.course);
+      return !blockCourseIds.has(courseId) && offering.course_active;
+    })
+    .map((offering) => {
+      const courseId = String(offering.course?._id || offering.course);
+      const course = enrollmentState.courses.find(
+        (c) => String(c._id) === courseId,
+      );
+      if (!course) return null;
+      const available = Math.max((offering.capacity || 0) - (offering.enrolled || 0), 0);
+      const label = `${course.code} · ${course.name} (${available}/${offering.capacity} seats)`;
+      return { id: courseId, label, available };
+    })
+    .filter(Boolean);
+
+  select.innerHTML =
+    '<option value="">Select a course…</option>' +
+    extras
+      .map(
+        (extra) =>
+          `<option value="${escapeHtml(extra.id)}" ${extra.available === 0 ? "disabled" : ""}>${escapeHtml(extra.label)}</option>`,
+      )
+      .join("");
+}
+
+// Add an extra course checkbox to the courses list.
+function bindExtraCourse() {
+  document.querySelector("#add-extra")?.addEventListener("click", () => {
+    const select = document.querySelector("#extra-course");
+    const courseId = select?.value;
+    if (!courseId) return;
+
+    const course = enrollmentState.courses.find(
+      (c) => String(c._id) === courseId,
+    );
+    if (!course) return;
+
+    // Avoid duplicates — check if checkbox already exists.
+    const existing = document.querySelectorAll(
+      `input[name="courses"][value="${courseId}"]`,
+    );
+    if (existing.length > 0) {
+      existing.forEach((input) => (input.checked = true));
+      select.value = "";
+      return;
+    }
+
+    const offerings = enrollmentState.selectedSemester?.offerings || [];
+    const offering = offerings.find(
+      (o) => String(o.course?._id || o.course) === courseId,
+    );
+    const capacity = offering?.capacity ?? 0;
+    const enrolled = offering?.enrolled ?? 0;
+    const available = Math.max(capacity - enrolled, 0);
+    const seatText = available > 0
+      ? ` · ${available}/${capacity} seats available`
+      : ` · Full (0/${capacity} seats)`;
+    const isUnavailable = available === 0;
+
+    const label = document.createElement("label");
+    label.className = isUnavailable ? "off" : "";
+    label.innerHTML = `
+      <input type="checkbox" name="courses" value="${escapeHtml(course._id)}" ${isUnavailable ? "disabled" : "checked"}>
+      <span>
+        <strong>${escapeHtml(course.code)} · ${escapeHtml(course.name)}</strong>
+        <small>${escapeHtml(course.units)} units · Extra course${seatText}</small>
+      </span>
+    `;
+
+    // Append to all .courses containers (both modes share markup).
+    document.querySelectorAll(".courses").forEach((container) => {
+      const empty = container.querySelector(".empty");
+      if (empty) empty.remove();
+      container.appendChild(label.cloneNode(true));
+    });
+
+    select.value = "";
+  });
 }
 
 // Show matching students as selectable search results.
@@ -702,19 +798,32 @@ function bindEnrollmentEvents() {
   });
   bindStudentSearch();
   bindDropDialog();
+  bindExtraCourse();
+  document.querySelector("#enroll-cancel")?.addEventListener("click", () => {
+    document.querySelector("#enroll-form")?.reset();
+    clearFieldErrors(document.querySelector("#new-part"));
+    clearFieldErrors(document.querySelector("#existing-part"));
+    const coursesError = document.querySelector('[data-error-for="courses"]');
+    if (coursesError) coursesError.textContent = "";
+    enrollmentState.selectedStudent = null;
+    enrollmentState.selectedBlock = null;
+    renderBlockCourses();
+  });
 }
 
-// Load programs, semesters, and blocks into shared enrollment state.
+// Load programs, semesters, blocks, and courses into shared enrollment state.
 async function loadReferenceData() {
-  const [programs, semesters, blocks] = await Promise.all([
+  const [programs, semesters, blocks, courses] = await Promise.all([
     requestJson("/programs?page=1&limit=100"),
     requestJson("/semesters?page=1&limit=100"),
     requestJson("/blocks?page=1&limit=100"),
+    requestJson("/courses?page=1&limit=200"),
   ]);
 
   enrollmentState.programs = programs.programs || [];
   enrollmentState.semesters = semesters.semesters || [];
   enrollmentState.blocks = blocks.blocks || [];
+  enrollmentState.courses = courses.courses || [];
 }
 
 // Initialize enrollment data, controls, and event handlers.
