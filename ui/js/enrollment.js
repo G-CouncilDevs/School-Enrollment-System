@@ -172,6 +172,11 @@ function selectBlock(event) {
 // Show selected block courses and their prerequisite names.
 function renderBlockCourses() {
   const courses = enrollmentState.selectedBlock?.courses || [];
+  const offerings = enrollmentState.selectedSemester?.offerings || [];
+  const offeringByCourse = new Map(
+    offerings.map((offering) => [String(offering.course?._id || offering.course), offering]),
+  );
+
   const markup = courses.length
     ? courses
         .map(({ course }) => {
@@ -181,12 +186,30 @@ function renderBlockCourses() {
                 .join(", ")
             : "None";
 
+          const offering = offeringByCourse.get(String(course._id));
+          const capacity = offering?.capacity ?? 0;
+          const enrolled = offering?.enrolled ?? 0;
+          const available = Math.max(capacity - enrolled, 0);
+
+          let isUnavailable = false;
+          let seatText = "";
+
+          if (!offering || !offering.course_active) {
+            isUnavailable = true;
+            seatText = " · Closed";
+          } else if (available === 0) {
+            isUnavailable = true;
+            seatText = ` · Full (0/${capacity} seats)`;
+          } else {
+            seatText = ` · ${available}/${capacity} seats available`;
+          }
+
           return `
-            <label>
-              <input type="checkbox" name="courses" value="${escapeHtml(course._id)}">
+            <label class="${isUnavailable ? "off" : ""}">
+              <input type="checkbox" name="courses" value="${escapeHtml(course._id)}" ${isUnavailable ? "disabled" : ""}>
               <span>
                 <strong>${escapeHtml(course.code)} · ${escapeHtml(course.name)}</strong>
-                <small>${escapeHtml(course.units)} units · Prerequisites: ${prerequisites}</small>
+                <small>${escapeHtml(course.units)} units · Prerequisites: ${prerequisites}${seatText}</small>
               </span>
             </label>
           `;
@@ -260,6 +283,13 @@ function renderEnrollments() {
 function getSelectedCourseIds(container) {
   return [...(container?.querySelectorAll('input[name="courses"]:checked') || [])]
     .map((input) => input.value);
+}
+
+// Reload semesters from API to update seat availability.
+async function refreshSemesters() {
+  const response = await requestJson("/semesters?page=1&limit=100");
+  enrollmentState.semesters = response.semesters || [];
+  enrollmentState.selectedSemester = getSelectedSemester() || null;
 }
 
 // Load enrollments for the currently selected semester.
@@ -382,6 +412,8 @@ async function submitExistingEnrollment(event) {
     event.currentTarget.reset();
     enrollmentState.selectedStudent = null;
     enrollmentState.selectedBlock = null;
+    await refreshSemesters();
+    renderBlockCourses();
     await loadEnrollments();
   } catch (error) {
     showToast(error.message, true);
@@ -457,6 +489,8 @@ async function submitNewEnrollment(event) {
     const coursesError = document.querySelector('[data-error-for="courses"]');
     if (coursesError) coursesError.textContent = "";
     enrollmentState.selectedBlock = null;
+    await refreshSemesters();
+    renderBlockCourses();
     await loadEnrollments();
   } catch (error) {
     showToast(error.message, true);
