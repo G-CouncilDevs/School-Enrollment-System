@@ -18,6 +18,14 @@ function showFieldError(container, field, message) {
   if (span) span.textContent = message;
 }
 
+// Toggle submit button state and label during form submission.
+function setSubmitting(isSubmitting) {
+  const button = document.querySelector("#enroll-submit");
+  if (!button) return;
+  button.disabled = isSubmitting;
+  button.textContent = isSubmitting ? "Enrolling…" : "Enroll Student";
+}
+
 // Validate the new-student form fields and show per-field errors.
 // Returns true when every required field is filled in.
 function validateNewStudentFields(container) {
@@ -322,6 +330,7 @@ async function submitExistingEnrollment(event) {
     return;
   }
 
+  setSubmitting(true);
   try {
     const response = await requestJson("/enrollments", {
       method: "POST",
@@ -344,6 +353,8 @@ async function submitExistingEnrollment(event) {
     await loadEnrollments();
   } catch (error) {
     showToast(error.message, true);
+  } finally {
+    setSubmitting(false);
   }
 }
 
@@ -378,6 +389,7 @@ async function submitNewEnrollment(event) {
     return;
   }
 
+  setSubmitting(true);
   try {
     const response = await requestJson("/enrollments", {
       method: "POST",
@@ -412,6 +424,8 @@ async function submitNewEnrollment(event) {
     await loadEnrollments();
   } catch (error) {
     showToast(error.message, true);
+  } finally {
+    setSubmitting(false);
   }
 }
 
@@ -420,6 +434,10 @@ function bindEnrollmentEvents() {
   document.querySelector("#enroll-form")?.addEventListener(
     "submit",
     (event) => {
+      if (document.querySelector("#enroll-submit")?.disabled) {
+        event.preventDefault();
+        return;
+      }
       if (document.querySelector("#mode-new")?.checked) {
         submitNewEnrollment(event);
       } else {
