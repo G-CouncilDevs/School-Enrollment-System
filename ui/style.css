@@ -213,12 +213,19 @@ td { padding: 14px 8px; border-top: 1px solid var(--line); }
 
 /* ---------- Popups (<dialog>, opened by script.js) ---------- */
 dialog.modal { width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px); padding: 0; border: 0; border-radius: 14px; }
+dialog.modal.wide { width: min(760px, calc(100% - 32px)); }
 dialog.modal::backdrop { background: rgba(15, 23, 42, 0.5); }
 .modal-box { padding: 24px; background: #fff; }
 .modal-box h2 { margin: 0 0 16px; font-size: 20px; }
 .modal-box form { display: flex; flex-direction: column; gap: 14px; }
 .modal-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+.modal-buttons.spread { justify-content: space-between; align-items: center; }
 .modal-box p { margin: 0; }
+.modal .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.address-row { display: grid; grid-template-columns: 2fr 1.3fr 1.3fr 1.3fr; gap: inherit; }
+.span-all { grid-column: 1 / -1; }
+.btn.danger-text { color: var(--red); }
+.btn.danger-text:hover:not(:disabled) { background: #fef2f2; border-color: #fecaca; }
 
 /* ---------- Small screens ---------- */
 @media (max-width: 900px) {
@@ -229,4 +236,6 @@ dialog.modal::backdrop { background: rgba(15, 23, 42, 0.5); }
   .metrics { grid-template-columns: 1fr; }
   .panel-head { flex-direction: column; align-items: stretch; }
   .row input, .row select { flex: 1 1 140px; min-width: 0; }
+  .modal .grid, .address-row { grid-template-columns: 1fr; }
+  .modal-buttons.spread { flex-direction: column-reverse; align-items: stretch; }
 }
