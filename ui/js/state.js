@@ -2,6 +2,7 @@ export const PAGE_SIZE = 10;
 
 export const state = {
   courses: [],
+  allCourses: [],
   students: [],
   programs: [],
   enrollments: [],

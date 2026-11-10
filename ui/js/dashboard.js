@@ -2,6 +2,7 @@ import { requestJson } from "./api.js";
 import {
   createOrUpdateCourse,
   deleteSelectedCourse,
+  fetchAllCourses,
   loadCourses,
   openCourseDeleteDialog,
   openCourseDialog,
@@ -87,11 +88,17 @@ async function loadEnrollmentData() {
     requestJson("/blocks?page=1&limit=100"),
     requestJson("/semesters?page=1&limit=100"),
     requestJson("/students?page=1&limit=1"),
-    requestJson("/courses?page=1&limit=1"),
+    fetchAllCourses().catch((err) => {
+      console.error("Failed to load all courses:", err);
+      return [];
+    }),
   ]);
   state.enrollments = enrollments?.enrollments || enrollments || [];
   state.blocks = blocks?.blocks || blocks || [];
   state.semesters = semesters?.semesters || semesters || [];
+  if (Array.isArray(allCourses)) {
+    state.allCourses = allCourses;
+  }
 
   const studentsMetric = document.querySelector("#metric-students");
   if (studentsMetric && allStudents?.total !== undefined) {
@@ -99,8 +106,8 @@ async function loadEnrollmentData() {
   }
 
   const coursesMetric = document.querySelector("#metric-courses");
-  if (coursesMetric && allCourses?.total !== undefined) {
-    coursesMetric.textContent = allCourses.total;
+  if (coursesMetric) {
+    coursesMetric.textContent = state.allCourses?.length ?? 0;
   }
 
   renderDashboardAcademicYears();
@@ -132,7 +139,9 @@ function bindDashboardEvents(loadData) {
     state.studentPage = 1;
     loadStudents(handleLoadError).catch(handleLoadError);
   });
-  document.querySelector("#add-course-btn")?.addEventListener("click", () => openCourseDialog());
+  document.querySelector("#add-course-btn")?.addEventListener("click", () => {
+    openCourseDialog().catch(console.error);
+  });
   document.querySelector("#course-form")?.addEventListener("submit", (event) => {
     createOrUpdateCourse(event, loadData);
   });
@@ -167,17 +176,20 @@ function bindDashboardEvents(loadData) {
 
     const courseEdit = event.target.closest("[data-course-edit]");
     if (courseEdit) {
-      openCourseDialog(
-        state.courses.find((course) => String(course._id) === courseEdit.dataset.courseEdit),
-      );
+      const courseId = courseEdit.dataset.courseEdit;
+      const course =
+        (state.allCourses || []).find((c) => String(c._id) === courseId) ||
+        state.courses.find((c) => String(c._id) === courseId);
+      openCourseDialog(course).catch(console.error);
       return;
     }
 
     const courseDelete = event.target.closest("[data-course-delete]");
     if (courseDelete) {
-      const course = state.courses.find(
-        (candidate) => String(candidate._id) === courseDelete.dataset.courseDelete,
-      );
+      const courseId = courseDelete.dataset.courseDelete;
+      const course =
+        (state.allCourses || []).find((candidate) => String(candidate._id) === courseId) ||
+        state.courses.find((candidate) => String(candidate._id) === courseId);
       if (course) openCourseDeleteDialog(course);
       return;
     }

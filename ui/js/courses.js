@@ -57,7 +57,7 @@ export function renderCourses() {
                     .map((prerequisite) => {
                       const code =
                         prerequisite?.code ||
-                        state.courses.find(
+                        (state.allCourses?.length ? state.allCourses : state.courses).find(
                           (c) =>
                             String(c._id) ===
                             String(prerequisite?._id || prerequisite),
@@ -83,8 +83,31 @@ export function renderCourses() {
   if (count) count.textContent = `${courses.length} course${courses.length === 1 ? "" : "s"} shown`;
 }
 
+// Fetch all courses across pages without search or program filters.
+export async function fetchAllCourses() {
+  const all = [];
+  let page = 1;
+  while (true) {
+    const response = await requestJson(`/courses?page=${page}&limit=100`);
+    const list = response.courses || [];
+    all.push(...list);
+    if (!response.total || all.length >= response.total || list.length === 0) {
+      break;
+    }
+    page += 1;
+  }
+  return all;
+}
+
+// Load the complete list of courses into shared state.
+export async function loadAllCourses() {
+  const courses = await fetchAllCourses();
+  state.allCourses = courses;
+  return courses;
+}
+
 // Open the course dialog in create or edit mode.
-export function openCourseDialog(course = null) {
+export async function openCourseDialog(course = null) {
   const dialog = document.querySelector("#course-dialog");
   const form = document.querySelector("#course-form");
   if (!dialog || !form) return;
@@ -103,24 +126,41 @@ export function openCourseDialog(course = null) {
   form.elements.name.value = course?.name || "";
   form.elements.units.value = course?.units || "";
 
-  const prereqList = document.querySelector("#prereq-list");
-  prereqList.innerHTML = state.courses
+  if (!state.allCourses || state.allCourses.length === 0) {
+    try {
+      await loadAllCourses();
+    } catch (err) {
+      console.error("Failed to load courses for prerequisites:", err);
+    }
+  }
+
+  const prereqSource = (state.allCourses && state.allCourses.length)
+    ? state.allCourses
+    : state.courses;
+
+  const candidates = prereqSource
     .filter((candidate) => String(candidate._id) !== String(course?._id))
-    .map(
-      (candidate) => `
-        <label>
-          <input type="checkbox" name="prerequisites" value="${escapeHtml(candidate._id)}"
-            ${(course?.prerequisites || []).some(
-              (prerequisite) =>
-                String(prerequisite._id || prerequisite) === String(candidate._id),
-            )
-              ? "checked"
-              : ""}>
-          ${escapeHtml(candidate.code)} · ${escapeHtml(candidate.name)}
-        </label>
-      `,
-    )
-    .join("");
+    .sort((a, b) => (a.code || "").localeCompare(b.code || ""));
+
+  const prereqList = document.querySelector("#prereq-list");
+  prereqList.innerHTML = candidates.length
+    ? candidates
+        .map(
+          (candidate) => `
+            <label>
+              <input type="checkbox" name="prerequisites" value="${escapeHtml(candidate._id)}"
+                ${(course?.prerequisites || []).some(
+                  (prerequisite) =>
+                    String(prerequisite._id || prerequisite) === String(candidate._id),
+                )
+                  ? "checked"
+                  : ""}>
+              ${escapeHtml(candidate.code)} · ${escapeHtml(candidate.name)}
+            </label>
+          `,
+        )
+        .join("")
+    : '<p class="empty" style="margin: 4px 0; font-size: 13px;">No other courses available.</p>';
 
   dialog.showModal();
 }
@@ -233,7 +273,7 @@ export async function loadCourses(handleLoadError) {
   }
   if (!programId && !search) {
     const metric = document.querySelector("#metric-courses");
-    if (metric) metric.textContent = state.courseTotal;
+    if (metric) metric.textContent = state.allCourses?.length || state.courseTotal;
   }
 }
 
